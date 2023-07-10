@@ -3,10 +3,10 @@ from itertools import count
 import logging
 import time
 
-from .exception import HTTPException
-from .parser import HTTPReader
-from .parser import parse
-from .response import Response
+from meander import exception
+from meander.parser import HTTPReader
+from meander.parser import parse
+from meander.response import Response
 
 
 log = logging.getLogger(__package__)
@@ -61,14 +61,17 @@ class HTTPConnection:
                         writer.write(result.value)
                         keep_alive = document.is_keep_alive
                     else:
-                        raise HTTPException(404, "Not Found")
-            except (AttributeError, ValueError) as err:
+                        raise exception.HTTPException(404, "Not Found")
+            except (exception.DuplicateAttributeError,
+                    exception.ExtraAttributeError,
+                    exception.PayloadValueError,
+                    exception.RequiredAttributeError) as err:
                 reason_code = 400
                 writer.write(Response(str(err), 400, "Bad Request").value)
             except TimeoutError:
                 keep_alive = False
                 log.info(f"timeout {cid=}")
-            except HTTPException as exc:
+            except exception.HTTPException as exc:
                 reason_code = exc.code
                 if reason_code == 404 and self.on_404:
                     writer.write(Response(self.on_404()).value)

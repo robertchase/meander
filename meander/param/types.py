@@ -28,8 +28,10 @@ class String:
         value = str(value)
         if self.min:
             if len(value) < self.min:
-                raise ValueError(f"length is less than minimum ({self.min})")
+                raise ValueError(
+                    f"is shorter than the minimum length ({self.min})")
         if self.max:
             if len(value) > self.max:
-                raise ValueError(f"length is more than maximum ({self.max})")
+                raise ValueError(
+                    f"is longer than the maximum length ({self.max})")
         return value

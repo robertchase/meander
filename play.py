@@ -10,7 +10,7 @@ async def ping(request):
     return "pong"
 
 
-@web.payload(a=int, b=str)
+@web.payload(a=int, b=web.param.String(min=3, max=5))
 async def echo(a, b):
     return dict(a=a, b=b)
 

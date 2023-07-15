@@ -1,6 +1,6 @@
 from meander import exception
 from meander.param import Param
-from meander.request import Request
+from meander.document import ServerDocument as Request
 
 
 def payload(include_connection_id=False, **params):
@@ -30,13 +30,14 @@ def payload(include_connection_id=False, **params):
 
             normal = []
             for param in params:
-                if param.name not in kwargs and param.is_required:
-                    raise exception.RequiredAttributeError(param.name)
                 if param.name not in kwargs:
+                    if param.is_required:
+                        raise exception.RequiredAttributeError(param.name)
                     normal.append(param.default)
                 else:
                     try:
-                        normal.append(param.type(kwargs[param.name]))
+                        value = kwargs[param.name]
+                        normal.append(param.type(value))
                     except ValueError as err:
                         raise exception.PayloadValueError(
                             f"'{param.name}' is {err}")

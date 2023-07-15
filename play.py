@@ -15,9 +15,12 @@ async def echo(a, b):
     return dict(a=a, b=b)
 
 
-web.add_server("test",
-    {"/ping": {"GET": ping},
-     "/echo": {"GET": echo, "PUT": echo},
-     "/echo/(\d+)": {"GET": echo},
-    }, 12345)
+web.add_server(
+    "test", {
+        "/ping": {"GET": ping},
+        "/echo": {"GET": echo, "PUT": echo},
+        r"/echo/(\d+)": {"GET": echo}
+    },
+    port=12345,
+    ssl_certfile="tmp.com.crt", ssl_keyfile="tmp.com.key")
 web.run()

@@ -6,7 +6,7 @@ import re
 import urllib.parse as urlparse
 
 from meander.exception import HTTPException, HTTPEOF
-from meander.request import Request
+from meander.document import ClientDocument, ServerDocument
 
 
 class HTTPReader:  # pylint: disable=too-many-instance-attributes
@@ -94,12 +94,12 @@ async def parse(reader):
     if not isinstance(reader, HTTPReader):
         reader = HTTPReader(reader)
 
-    document = Request()
-
     try:
         if reader.is_server:
+            document = ServerDocument()
             await parse_server(reader, document)
         else:
+            document = ClientDocument()
             await parse_client(reader, document)
     except HTTPEOF:
         document = None

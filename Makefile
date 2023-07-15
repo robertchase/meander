@@ -13,6 +13,13 @@ jupyter:
 play:
 	@$(py) play.py
 
+.PHONY: certs
+certs:
+	# https://stackoverflow.com/questions/10175812/how-to-generate-a-self-signed-ssl-certificate-using-openssl/41366949#41366949
+	@openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 \
+     -nodes -keyout tmp.com.key -out tmp.com.crt -subj "/CN=example.com" \
+     -addext "subjectAltName=DNS:example.com,DNS:*.example.com,IP:10.0.0.1"
+
 .PHONY: pythonpath
 pythonpath:
 	@echo $(PYTHONPATH)

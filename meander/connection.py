@@ -35,31 +35,31 @@ class HTTPConnection:
             message = None
             keep_alive = False
             try:
-                if document := await parse(reader):
+                if request := await parse(reader):
                     rid = next(request_sequence)
                     reason_code = 200
                     r_start = time.perf_counter()
                     message = (
                         f"request cid={cid}"
-                        f" rid={rid} method={document.http_method}"
-                        f" resource={document.http_resource}")
-                    if route := self.router(document.http_resource,
-                                            document.http_method):
+                        f" rid={rid} method={request.http_method}"
+                        f" resource={request.http_resource}")
+                    if route := self.router(request.http_resource,
+                                            request.http_method):
                         silent = route.silent
                         if open_msg:
                             if not silent:
                                 log.info(open_msg)
                             open_msg = None
-                        document.args = route.args
-                        document.connection_id = cid
-                        document.id = rid
-                        result = await route.handler(document)
+                        request.args = route.args
+                        request.connection_id = cid
+                        request.id = rid
+                        result = await route.handler(request)
                         if result is None:
                             result = ""
                         if not isinstance(result, Response):
                             result = Response(result)
                         writer.write(result.value)
-                        keep_alive = document.is_keep_alive
+                        keep_alive = request.is_keep_alive
                     else:
                         raise exception.HTTPException(404, "Not Found")
             except (exception.DuplicateAttributeError,
@@ -114,5 +114,8 @@ class HTTPConnection:
                 log.info(
                     f"close cid={cid}"
                     f" t={time.perf_counter() - t_start:.6f}")
-            await writer.drain()
-            writer.close()
+            try:
+                await writer.drain()
+                writer.close()
+            except ConnectionResetError:
+                pass

@@ -17,6 +17,12 @@ def add_runnable(runnable):
     runnables.append(runnable)
 
 
+def get_runnable():
+    """return the most recently appended runnable"""
+    if len(runnables):
+        return runnables[-1]
+
+
 def run():
 
     async def _run():

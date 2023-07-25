@@ -11,7 +11,7 @@ jupyter:
 
 .PHONY: play
 play:
-	@$(py) play.py
+	@$(py) akk.py
 
 .PHONY: certs
 certs:

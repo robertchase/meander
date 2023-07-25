@@ -4,7 +4,7 @@ import importlib
 import re
 
 
-Route = namedtuple("Route", "handler, args, silent")
+Route = namedtuple("Route", "handler, args, silent, prelude")
 
 
 class Router:
@@ -14,24 +14,35 @@ class Router:
 
            "routes" is a dict of the form:
                 {
+                    "pattern": PATH,
                     "pattern": {
-                        "method": "path",
-                        "method": {"silent": True, "handler": "path"},...
+                        "method": PATH,
+                        "method": {control-parameters},...
                     },...
                 }
 
             where:
-                - "pattern" is a regex matching an http_resource
+                - "pattern" is a regex matching an http_resource (path)
                 - "method" is a string matching an http_method ("GET", "POST",
                   etc).
-                - "path" is an http handler or a dot-delimited path to an http
-                  handler.
+                - PATH is an http handler (callable) or a dot-delimited path
+                  to an http handler, or a simple string
+                - control-parameters is a dict containing:
+                    "handler" : PATH
+
+                    and any of:
+
+                    "silent": True|False (see route attributes below)
+                    "prelude": [callable, ...] (see route attributes below)
+
+            if a pattern has only a "GET" method handler, then the dict of
+            methods and paths can be replaced with just a path.
 
             example:
                 {
-                    "/ping": {
-                        "GET": "myapp.basic.ping",
-                    },
+
+                    "/ping": "pong",
+
                     "/user/([0-9a-f]{16})": {
                         "GET": "myapp.user.get_user",
                         "POST": "myapp.user.add_user",
@@ -43,12 +54,15 @@ class Router:
                 if route := router(http_resource, http_method):
                     # handle the http_document
 
-            the returned route has three attributes:
+            the returned route has four attributes:
                 handler - callable that takes an http_document and returns
                           any result
-                silent - a flag that controls the logging in aiohttp
+                silent - a flag that can disable logging
                 args - list of regex groups parsed from the http_resource
                        using the pattern
+                prelude - list of callables to execute prior to calling the
+                           handler; each callable is invoked in order with
+                           the http_document as the only argument
 
             Notes:
 
@@ -59,7 +73,12 @@ class Router:
             4. if grouping parethesis are used in pattern then the grouped
                items are returned in the "args" attribute of the route
         """
-        for val in routes.values():
+        self._routes = {}
+        for url, val in routes.items():
+
+            if not isinstance(val, dict):
+                val = {"GET": val}
+
             for method, path in val.items():
 
                 # treat dict as kwargs to a handler class
@@ -67,7 +86,11 @@ class Router:
                     path["handler"] = lookup(path["handler"])
                     hdlr = Handler(**path)
 
-                # directly replace str with module
+                # simple string
+                elif isinstance(path, str) and "." not in path:
+                    hdlr = Handler(simple_string(path))
+
+                # directly replace dot-delimited str with callable
                 elif isinstance(path, str):
                     hdlr = Handler(lookup(path))
 
@@ -77,18 +100,26 @@ class Router:
 
                 val[method] = hdlr
 
-        self._routes = routes
+            self._routes[url] = val
 
     def __call__(self, resource, method):
         """try to match a resource/method to a defined route"""
         for key, val in self._routes.items():
             if match := re.match(key + "$", resource):
                 if path := val.get(method):
-                    return Route(path.handler, match.groups(), path.silent)
+                    return Route(path.handler, match.groups(), path.silent,
+                                 path.prelude)
+
+
+def simple_string(s):
+    """return a callable that returns "s" when called with a single arg"""
+    def _simple_string(arg):
+        return s
+    return _simple_string
 
 
 def lookup(path):
-    """convert a path to a module"""
+    """convert a path to a callable"""
     if isinstance(path, str):
         modnam, funnam = path.rsplit(".", 1)
         mod = importlib.import_module(modnam)
@@ -98,6 +129,7 @@ def lookup(path):
 
 # pylint: disable-next=too-few-public-methods
 class Handler:
-    def __init__(self, handler, silent=False):
+    def __init__(self, handler, silent=False, prelude=None):
         self.handler = handler
         self.silent = silent
+        self.prelude = prelude if prelude else []

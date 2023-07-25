@@ -14,6 +14,9 @@ class Param:
         elif isinstance(ptype, type):  # meh
             ptype = ptype()
         self.type = ptype
-        self.is_required = True if default == self.NO_DEFAULT else False
         self.default = default
         self.name = None
+
+    @property
+    def is_required(self):
+        return self.default == self.NO_DEFAULT

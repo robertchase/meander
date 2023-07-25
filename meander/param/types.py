@@ -1,6 +1,11 @@
 import re
 
 
+ConnectionId = type("CONNECTIONID", (), dict())
+
+Kwargs = type("KWARGS", (), dict())
+
+
 def boolean(value):
     if value in (1, "1", True):
         return True

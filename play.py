@@ -6,21 +6,29 @@ import meander as web
 logging.basicConfig(level=logging.DEBUG)
 
 
-async def ping(request):
-    return "pong"
-
-
-@web.payload(a=int, b=web.param.String(min=3, max=5))
-async def echo(a, b):
+@web.payload_noid(a=int, b=web.param.String(min=3, max=5))
+def echo(a: int, b: str) -> dict:
     return dict(a=a, b=b)
 
 
-web.add_server(
-    "test", {
-        "/ping": {"GET": ping},
-        "/echo": {"GET": echo, "PUT": echo},
-        r"/echo/(\d+)": {"GET": echo}
+async def pingping(request):
+    result = await web.call("http://localhost:8080/ping")
+    return result.content
+
+
+@web.payload_noid(gather_extra_kwargs=True, a=str, b=str)
+def akk(a, b, **c):
+    return dict(a=a, b=b, c=c)
+
+
+web.add_server({
+    "/akk": akk,
+    "/ping": "pong",
+    "/pingping": pingping,
+    "/echo": {
+        "GET": echo,
+        "PUT": echo
     },
-    port=12345,
-    ssl_certfile="tmp.com.crt", ssl_keyfile="tmp.com.key")
+    r"/echo/(\d+)": echo,
+})
 web.run()

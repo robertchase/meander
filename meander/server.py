@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 import asyncio
 from dataclasses import dataclass
 import logging
@@ -6,7 +5,7 @@ import ssl
 
 from meander.connection import HTTPConnection
 from meander.router import Router
-from meander.runner import Runnable, add_runnable
+from meander.runner import Runnable, add_runnable, get_runnable
 
 
 log = logging.getLogger(__package__)
@@ -27,7 +26,10 @@ class Server(Runnable):
             raise AttributeError("ssl_certfile not specified")
 
     async def start(self):
-        log.info("starting server %s on port %d", self.name, self.port)
+        if self.name:
+            log.info("starting server %s on port %d", self.name, self.port)
+        else:
+            log.info("starting server on port %d", self.port)
 
         context = None
         if self.ssl_certfile and self.ssl_keyfile:
@@ -41,5 +43,8 @@ class Server(Runnable):
         ).serve_forever()
 
 
-def add_server(name, routes, port, ssl_certfile=None, ssl_keyfile=None):
-    add_runnable(Server(name, routes, port, ssl_certfile, ssl_keyfile))
+def add_server(routes: dict, name: str = None, port: int = 8080,
+               ssl_certfile: str = None, ssl_keyfile: str = None) -> Server:
+    server = Server(name, routes, port, ssl_certfile, ssl_keyfile)
+    add_runnable(server)
+    return server

@@ -1,9 +1,11 @@
+import asyncio
 from asyncio.exceptions import TimeoutError
 from itertools import count
 import logging
 import time
 
 from meander import exception
+from meander.param import annotate
 from meander.parser import HTTPReader
 from meander.parser import parse
 from meander.response import Response
@@ -53,12 +55,19 @@ class HTTPConnection:
                         request.args = route.args
                         request.connection_id = cid
                         request.id = rid
-                        result = await route.handler(request)
+
+                        for prepare in route.prelude:
+                            prepare(request)
+
+                        result = annotate.call(route.handler, request)
+                        if asyncio.iscoroutine(result):
+                            result = await result
+
                         if result is None:
                             result = ""
                         if not isinstance(result, Response):
                             result = Response(result)
-                        writer.write(result.value)
+                        writer.write(result.serial())
                         keep_alive = request.is_keep_alive
                     else:
                         raise exception.HTTPException(404, "Not Found")
@@ -67,26 +76,27 @@ class HTTPConnection:
                     exception.PayloadValueError,
                     exception.RequiredAttributeError) as err:
                 reason_code = 400
-                writer.write(Response(str(err), 400, "Bad Request").value)
+                result = Response(str(err), 400, "Bad Request")
+                writer.write(result.serial())
             except TimeoutError:
                 keep_alive = False
                 log.info(f"timeout {cid=}")
             except exception.HTTPException as exc:
                 reason_code = exc.code
                 if reason_code == 404 and self.on_404:
-                    writer.write(Response(self.on_404()).value)
+                    result = Response(self.on_404())
                 else:
-                    writer.write(
-                        Response(code=exc.code, message=exc.reason,
-                                 content=exc.explanation).value)
+                    result = Response(code=exc.code, message=exc.reason,
+                                      content=exc.explanation)
+                writer.write(result.serial())
             except Exception:
                 log.exception(f"exception: cid={cid}")
                 reason_code = 500
                 if self.on_500:
-                    writer.write(Response(self.on_500()).value)
+                    result = Response(self.on_500())
                 else:
-                    writer.write(Response(
-                        code=500, message="Internal Server Error").value)
+                    result = Response(code=500, message="Internal Server Error")
+                writer.write(result.serial())
             finally:
                 if not silent:
                     if open_msg:
@@ -103,9 +113,9 @@ class HTTPConnection:
             t_start = time.perf_counter()
             peerhost, peerport = writer.get_extra_info("peername")[:2]
             cid = next(connection_sequence)
-            open_msg = (
-                f"open server={self.name}"
-                f" socket={peerhost}:{peerport}"
+            open_msg = f"open server={self.name} " if self.name else ""
+            open_msg += (
+                f"socket={peerhost}:{peerport}"
                 f" cid={cid}")
             while await handle():
                 pass

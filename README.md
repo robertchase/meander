@@ -1,7 +1,6 @@
 # meander
 tiny asnyc web
 
-# examples
 ## basic operation
 
 ```
@@ -18,7 +17,15 @@ If we saved the code in a file named `my-server.py`, then running it is a simple
 ```
 python3 my-server.py
 ```
-Note: *`meander` is in the PYTHONPATH*.<br>The server will run until stopped from the terminal with `CTRL-C`.
+
+--
+
+Notes: 
+
+* *`meander` is in the PYTHONPATH.*
+* *The server will run until stopped from the terminal with `CTRL-C`.*
+
+--
 
 To talk to the server, use `curl` in another terminal:
 
@@ -129,7 +136,7 @@ web.add_server({
 )}
 ```
 
-The `GET` call will work the same. What happens with `PUT`? We'll send some simple text data to the endpoint and see.
+The `GET` call will work the same as before. What happens with `PUT`? We'll send some simple text data to the endpoint and see.
 
 ```
 curl -v localhost:8080/echo -XPUT --data "this is a test" -H "content-type: text/plain"
@@ -149,7 +156,7 @@ curl -v localhost:8080/echo -XPUT --data "this is a test" -H "content-type: text
 this is a test
 ```
 
-The data we sent was supplied in the `request.content` attribute. Although there are other attributes that show specifically what arrived in the `query string` or in the `http_content` area, the request attempts to coerce the input data (with specific attention to `form`, `json`, and `query string` data) into this single attribute, no matter the `HTTP` method used.
+The data we sent was supplied in the `request.content` attribute. Although there are other attributes that show specifically what arrived in the `query string` or in the `http_content` area, `meander` attempts to coerce the input data (with specific attention to `form`, `json`, and `query string` data) into this single attribute, no matter the `HTTP` method used.
 
 Here is a `PUT` with `form` data:
 
@@ -173,4 +180,122 @@ curl -v localhost:8080/echo -XPUT -d a=1 -d b=2
 
 The `form` data is converted into a `dict` and stored in `request.content`. When the content is returned by the `echo` handler, it is converted to `json`.
 
-### payload
+### automatic argument assignment
+
+Now that we understand how `HTTP` data is converted into `dict` data in the `content` attribute of the `request`, we can have `meander` automatically supply values from that `dict` into a function.
+
+Here is a simple add function:
+
+```
+def add(a, b):
+	return a + b
+	
+web.add_server({"/add": add})
+web.run()
+```
+
+Here, `meander` will see the parameter names and automatically look up the values by name from the `dict` in the `content` attribute. Lets try it:
+
+```
+curl localhost:8080/add\?a=10\&b=20
+1020
+```
+
+We can see from the result, `1020`, that the two parameters were treated as strings and concatenated. If the purpose is to add `10` and `20`, then it makes sense to force the parameters to integer values. When the `int` annotation is added to the function signature, then `meander` will automatically do the conversion.
+
+```
+def add(a: int, b: int):
+    return a + b
+```
+
+Here is the result:
+
+```
+curl localhost:8080/add\?a=10\&b=20
+30
+```
+
+If `a` or `b` are not specified, or if their values cannot be coerced into integers, then a `400 Bad Request` will be returned along with a message.
+
+```
+curl localhost:8080/add\?b=2
+missing required attribute: a
+```
+
+```
+curl localhost:8080/add\?a=hello\&b=2
+'a' is not an integer
+```
+
+### default values
+
+Adding a default value to a function signature tells `meander` that the parameter is optional. If an optional parameter name is not found in the `content dict`, then `python` will supply the default value and the annotation&mdash;if specified&mdash;will be ignored.
+
+```
+def add(a: int, b: int = 1):
+    """add or increment"""
+    return a + b
+```
+
+Here is the result:
+
+```
+curl localhost:8080/add\?a=10
+11
+```
+
+### how meander chooses parameters
+
+Earlier, the `echo` handler was defined with a single parameter named `request`. This parameter was supplied with an `http_document` (a `web.Request` object). How did `meander` know *not* to look for `request` in the `content` attribute's `dict`? The answer is that `meander` follows a set of rules to determine how to supply parameters to a handler function:
+
+1. If no parameters are specified in the function, nothing is passed.
+2. If one parameter is specified, and that parameter has no annotation or has an annotation of `web.Request`, then the `http_document` is passed as the only parameter.
+3. If (1) and (2) don't apply, then each parameter is examined, and the *proper substitution* is applied.
+
+##### What is the proper substitution?
+
+* `int`, `bool` and `str` annotations will automatically perform conversions
+* a `web.Request` annotation will supply the `http_document` in any parameter that specifies it
+* a `web.ConnectionId` annotation will supply a string of the form `f"con={request.connection_id} req={request.id}"` which can be used to tie log messages together
+* an annotation which is a subclass of `web.ParamType` will be called with the value from the `content dict`, allowing for custom types
+* all other annotations are ignored and the value is passed through without change
+
+##### How does `int` conversion work?
+
+An `int` value must be composed of digits, and digits only. If this is the case, then the native `int` type is used to perform a base-10 conversion.
+
+##### How does `bool` conversion work?
+
+* 1, "1", or True returns a True
+* 0, "0", or False returns a False
+
+Otherwise, a `ValueError` is raised.
+
+##### How do I create my own annotation?
+
+The `web.ParamType` class is the super class for all user-defined annotation types. `meander` expects a `ParamType` subclass to implement the `__call__` magic method to validate and/or transform the value, returning the normalized result. Here is an example that validates social security number formats:
+
+```
+class SsnType(web.ParamType):
+	def __call__(self, value):
+	    if not (m := re.match(r"(\d{3})-?(\d{2})-?(\d{4})$", str(value))):
+	        raise ValueError("not a properly formatted SSN")
+	    return "".join(m.groups())
+```
+
+Validation errors are reported by raising a `ValueError` with a message which finishes the sentence: `'fieldname' is ...`&mdash;for instance, `'my_id' is not a properly formatted SSN`. On success, the value returned will be the value supplied to the annotated function parameter.
+
+### non-local functions
+
+If all of the functions that handle `meander` requests are local or imported, then the namespace of the module that makes the `add_server` call can get quite full. Another way to specify a handler function in the `add_server` call is to use the dot-delimited path to the function. If you had the `echo` function defined in a `python` file named `app/api/basic.py`, then the `add_server` call might look like this:
+
+```
+web.add_server({
+    "/echo": {
+        "GET": "app.api.basic.echo",
+        "PUT": "app.api.basic.echo",
+    }
+})
+```
+
+If `meander` sees a string value for the handler that contains one or more "." characters, it dynamically loads the code when `add_server` is called.

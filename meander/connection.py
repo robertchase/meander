@@ -56,8 +56,10 @@ class HTTPConnection:
                         request.connection_id = cid
                         request.id = rid
 
-                        for prepare in route.prelude:
-                            prepare(request)
+                        for before in route.before:
+                            result = before(request)
+                            if asyncio.iscoroutine(result):
+                                await result
 
                         result = annotate.call(route.handler, request)
                         if asyncio.iscoroutine(result):

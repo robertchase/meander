@@ -1,3 +1,4 @@
+from functools import wraps
 import logging
 
 import meander as web
@@ -11,6 +12,19 @@ def first(request):
         request.content["first"] = value
 
 
+def add_arg(handler):
+    @wraps(handler)
+    def _add_arg(*args, **kwargs):
+        kwargs["extra"] = "hi"
+        return handler(*args, **kwargs)
+    return _add_arg
+
+
+class Reverse(web.ParamType):
+    def __call__(cls, value):
+        return str(value)[::-1]
+
+
 def ping():
     return "pong"
 
@@ -19,9 +33,13 @@ def echo(request: web.Request):
     return request.content
 
 
-def add(a: int, b: int = 1, first: str = "", con_id: web.ConnectionId = "") -> int:
-    print(f"{con_id=} {first=}")
+def add(a: int, b: int = 1):
     return a + b
+
+
+@add_arg
+def play(a: Reverse, extra=""):
+    return {"extra": extra, "a": a}
 
 
 web.add_server({
@@ -32,9 +50,10 @@ web.add_server({
     },
     "/add": {
         "GET": {
-            "prelude": [first],
+            "before": [first],
             "handler": add,
         }
     },
+    "/play": play,
 })
 web.run()

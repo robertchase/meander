@@ -3,7 +3,11 @@ import re
 
 ConnectionId = type("CONNECTIONID", (), dict())
 
-Kwargs = type("KWARGS", (), dict())
+SkipParam = type("SKIPPARAM", (), dict())
+
+
+class ParamType:
+    pass
 
 
 def boolean(value):

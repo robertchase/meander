@@ -4,7 +4,7 @@ import importlib
 import re
 
 
-Route = namedtuple("Route", "handler, args, silent, prelude")
+Route = namedtuple("Route", "handler, args, silent, before")
 
 
 class Router:
@@ -33,7 +33,7 @@ class Router:
                     and any of:
 
                     "silent": True|False (see route attributes below)
-                    "prelude": [callable, ...] (see route attributes below)
+                    "before": [callable, ...] (see route attributes below)
 
             if a pattern has only a "GET" method handler, then the dict of
             methods and paths can be replaced with just a path.
@@ -60,7 +60,7 @@ class Router:
                 silent - a flag that can disable logging
                 args - list of regex groups parsed from the http_resource
                        using the pattern
-                prelude - list of callables to execute prior to calling the
+                before - list of callables to execute prior to calling the
                            handler; each callable is invoked in order with
                            the http_document as the only argument
 
@@ -108,7 +108,7 @@ class Router:
             if match := re.match(key + "$", resource):
                 if path := val.get(method):
                     return Route(path.handler, match.groups(), path.silent,
-                                 path.prelude)
+                                 path.before)
 
 
 def simple_string(s):
@@ -120,7 +120,9 @@ def simple_string(s):
 
 def lookup(path):
     """convert a path to a callable"""
-    if isinstance(path, str):
+    if isinstance(path, str) and "." not in path:
+        path = simple_string(path)
+    elif isinstance(path, str):
         modnam, funnam = path.rsplit(".", 1)
         mod = importlib.import_module(modnam)
         path = getattr(mod, funnam)
@@ -129,7 +131,7 @@ def lookup(path):
 
 # pylint: disable-next=too-few-public-methods
 class Handler:
-    def __init__(self, handler, silent=False, prelude=None):
+    def __init__(self, handler, silent=False, before=None):
         self.handler = handler
         self.silent = silent
-        self.prelude = prelude if prelude else []
+        self.before = before if before else []

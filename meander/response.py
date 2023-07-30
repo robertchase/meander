@@ -1,3 +1,4 @@
+"""convenient formatters for HTTP responses"""
 import gzip
 import json
 import time
@@ -6,9 +7,18 @@ import urllib.parse as urlparse
 
 class Response:
     """form an http response"""
-    def __init__(self, content="", code=200, message="", headers=None,
-                 content_type=None, charset="utf-8", close=False,
-                 compress=False):
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        content="",
+        code=200,
+        message="",
+        headers=None,
+        content_type=None,
+        charset="utf-8",
+        close=False,
+        compress=False,
+    ):
         self.code = code
         self.message = "OK" if code == 200 and message == "" else message
         self.headers = {} if not headers else headers
@@ -16,7 +26,8 @@ class Response:
         self.normalize(content, content_type, charset, close, compress)
 
     def normalize(self, content, content_type, charset, close, compress):
-
+        """clean up response values"""
+        # pylint: disable=too-many-branches, too-many-arguments
         headers = self.headers
 
         header_keys = [k.lower() for k in headers.keys()]
@@ -39,8 +50,7 @@ class Response:
                 if content_type in ("json", "application/json"):
                     content = json.dumps(content)
                     content_type = "application/json"
-                elif content_type in (
-                        "form", "application/x-www-form-urlencoded"):
+                elif content_type in ("form", "application/x-www-form-urlencoded"):
                     content_type = "application/x-www-form-urlencoded"
                     content = urlparse.urlencode(content)
                 headers["Content-Type"] = content_type
@@ -55,7 +65,8 @@ class Response:
 
         if "date" not in header_keys:
             headers["Date"] = time.strftime(
-                "%a, %d %b %Y %H:%M:%S %Z", time.localtime())
+                "%a, %d %b %Y %H:%M:%S %Z", time.localtime()
+            )
 
         if "content-length" not in header_keys:
             headers["Content-Length"] = len(content)
@@ -69,9 +80,10 @@ class Response:
         self.content = content
 
     def serial(self):
+        """return formatted response"""
         headers = "%s\r\n%s\r\n\r\n" % (
             self.status,
-            "\r\n".join(["%s: %s" % (k, v) for k, v in self.headers.items()]),
+            "\r\n".join([f"{k}: {v}" for k, v in self.headers.items()]),
         )
         headers = headers.encode("ascii")
 
@@ -79,11 +91,21 @@ class Response:
 
 
 class ClientResponse(Response):
+    """formatter for HTTP client response"""
 
-    def __init__(self, method="GET", path="/", query="", headers=None,
-                 content="", host=None, content_type=None, charset="utf-8",
-                 close=False, compress=False):
-
+    def __init__(  # pylint: disable=too-many-arguments, super-init-not-called
+        self,
+        method="GET",
+        path="/",
+        query="",
+        headers=None,
+        content="",
+        host=None,
+        content_type=None,
+        charset="utf-8",
+        close=False,
+        compress=False,
+    ):
         if host:
             if not headers:
                 headers = {}
@@ -95,6 +117,7 @@ class ClientResponse(Response):
                 query.extend(_normalize(content))
                 content = ""
             elif content:
+                # pylint: disable-next=broad-exception-raised
                 raise Exception("content not allowed on GET")
             if query:
                 path += "?" + urlparse.urlencode(query)
@@ -107,9 +130,9 @@ class ClientResponse(Response):
 def _normalize(dct):
     """Normalize a dict into a list of tuples
 
-       Handle the case of a dictionary value being a list or tuple by adding
-       multiple tuples to the result, one for each combination of key and
-       list/tuple element.
+    Handle the case of a dictionary value being a list or tuple by adding
+    multiple tuples to the result, one for each combination of key and
+    list/tuple element.
     """
     if dct == "":
         return []
@@ -125,15 +148,16 @@ def _normalize(dct):
 
 class HTMLResponse(Response):
     """form and html respose"""
+
     def __init__(self, content, **kwargs):
         super().__init__(
-            content=content,
-            content_type="text/html; charset=UTF-8",
-            **kwargs)
+            content=content, content_type="text/html; charset=UTF-8", **kwargs
+        )
 
 
 class HTMLRefreshResponse(HTMLResponse):
     """form an html refresh response"""
+
     def __init__(self, url):
         super().__init__(
             "<html>"

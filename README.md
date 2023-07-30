@@ -1,6 +1,14 @@
 # meander
 tiny asnyc web
 
+## introduction
+
+The `meander` framework allows any python function to be used as an `API` endpoint. There are no variables magically injected into the frame, and no special decorators to worry about.
+
+This is accomplished by separating the wiring of the `API` from the construction of the code. You write a function, point to the function using `meander`, and the parameters used by the function are automatically pulled from the `HTTP Request`. Functions can be defined with or without the `async` keyword; `meander` will make the correct call.
+
+This library allows you to take the functions you've developed for your `API` and easily use them from other places from within your codebase, including `cli` code and unit tests.
+
 ## basic operation
 
 ```
@@ -229,7 +237,7 @@ curl localhost:8080/add\?a=hello\&b=2
 
 ### default values
 
-Adding a default value to a function signature tells `meander` that the parameter is optional. If an optional parameter name is not found in the `content dict`, then `python` will supply the default value and the annotation&mdash;if specified&mdash;will be ignored.
+Adding a default value to a function signature tells `meander` that the parameter is optional. If an optional parameter name is not found in the `content dict`, then `python` will supply the default value in the normal way.
 
 ```
 def add(a: int, b: int = 1):
@@ -269,8 +277,6 @@ An `int` value must be composed of digits, and digits only. If this is the case,
 * 1, "1", or True returns a True
 * 0, "0", or False returns a False
 
-Otherwise, a `ValueError` is raised.
-
 ##### How do I create my own annotation?
 
 The `web.ParamType` class is the super class for all user-defined annotation types. `meander` expects a `ParamType` subclass to implement the `__call__` magic method to validate and/or transform the value, returning the normalized result. Here is an example that validates social security number formats:
@@ -299,3 +305,20 @@ web.add_server({
 ```
 
 If `meander` sees a string value for the handler that contains one or more "." characters, it dynamically loads the code when `add_server` is called.
+
+### pre-processing
+
+Before running the handler function, `meander` can be instructed to execute one or more functions which take a `web.Request` as a parameter. These functions can examine http headers, perform authentication, manipulate the request object, or any other steps required before running the handler function. The syntax looks like this:
+
+```
+web.add_server({
+    "/ping" : {
+        "GET": {
+            "before": [authenticate],
+            "handler": "app.basic.ping",
+        },
+    },
+})
+```
+
+This tells `meander` to execute the `authenticate` function before calling the `ping` handler. The `authenticate` function might find a problem and have to throw a `web.HTTPException(401, "Unauthorized")`, which will prevent the handler code from being executed and return the `401` to the caller.

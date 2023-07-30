@@ -1,3 +1,6 @@
+"""containers for HTTP client and server documents"""
+
+
 class Document:  # pylint: disable=too-many-instance-attributes
     # pylint: disable=too-few-public-methods
     """container for http document data"""
@@ -14,12 +17,12 @@ class Document:  # pylint: disable=too-many-instance-attributes
         self.content = {}
 
 
-class ServerDocument(Document):
+class ServerDocument(Document):  # pylint: disable=too-few-public-methods
     """container for server-side http document data"""
 
     def __init__(self):
         super().__init__()
-        self.id = None
+        self.id = None  # pylint: disable=invalid-name
         self.connection_id = None
         self.http_method = None
         self.http_resource = None
@@ -28,7 +31,7 @@ class ServerDocument(Document):
         self.args = None  # re.Match.groups() from url
 
 
-class ClientDocument(Document):
+class ClientDocument(Document):  # pylint: disable=too-few-public-methods
     """container for client-side http document data"""
 
     def __init__(self):

@@ -1,4 +1,4 @@
-PYTHONPATH := $(PWD)/.
+PYTHONPATH := $(PWD):.
 VENV := $(PWD)/.env
 
 PATH := $(VENV)/bin:$(PATH)
@@ -11,7 +11,7 @@ jupyter:
 
 .PHONY: play
 play:
-	@$(py) akk.py
+	@$(py) play.py
 
 .PHONY: certs
 certs:

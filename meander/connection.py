@@ -1,11 +1,11 @@
+"""wrap tcp socket with HTTP logic"""
 import asyncio
-from asyncio.exceptions import TimeoutError
 from itertools import count
 import logging
 import time
 
+from meander import annotate
 from meander import exception
-from meander.param import annotate
 from meander.parser import HTTPReader
 from meander.parser import parse
 from meander.response import Response
@@ -18,35 +18,35 @@ connection_sequence = count(1)
 request_sequence = count(1)
 
 
-class HTTPConnection:
+class HTTPConnection:  # pylint: disable=too-few-public-methods
+    """handle requests arriving on an HTTP connection"""
 
-    def __init__(self, name, router,
-                 on_404=None,
-                 on_500=None):
+    def __init__(self, name, router, on_404=None, on_500=None):
         self.name = name
         self.router = router
         self.on_404 = on_404
         self.on_500 = on_500
 
     async def __call__(self, reader, writer):
+        # pylint: disable=too-many-statements
         reader = HTTPReader(reader)
 
-        async def handle():
+        async def handle():  # pylint: disable=too-many-branches
             nonlocal silent
             nonlocal open_msg
             message = None
             keep_alive = False
-            try:
+            r_start = time.perf_counter()
+            try:  # pylint: disable=too-many-nested-blocks
                 if request := await parse(reader):
                     rid = next(request_sequence)
                     reason_code = 200
-                    r_start = time.perf_counter()
                     message = (
                         f"request cid={cid}"
                         f" rid={rid} method={request.http_method}"
-                        f" resource={request.http_resource}")
-                    if route := self.router(request.http_resource,
-                                            request.http_method):
+                        f" resource={request.http_resource}"
+                    )
+                    if route := self.router(request.http_resource, request.http_method):
                         silent = route.silent
                         if open_msg:
                             if not silent:
@@ -73,26 +73,29 @@ class HTTPConnection:
                         keep_alive = request.is_keep_alive
                     else:
                         raise exception.HTTPException(404, "Not Found")
-            except (exception.DuplicateAttributeError,
-                    exception.ExtraAttributeError,
-                    exception.PayloadValueError,
-                    exception.RequiredAttributeError) as err:
+            except (
+                exception.DuplicateAttributeError,
+                exception.ExtraAttributeError,
+                exception.PayloadValueError,
+                exception.RequiredAttributeError,
+            ) as err:
                 reason_code = 400
                 result = Response(str(err), 400, "Bad Request")
                 writer.write(result.serial())
-            except TimeoutError:
+            except asyncio.exceptions.TimeoutError:
                 keep_alive = False
-                log.info(f"timeout {cid=}")
+                log.info("timeout cid=%s", cid)
             except exception.HTTPException as exc:
                 reason_code = exc.code
                 if reason_code == 404 and self.on_404:
                     result = Response(self.on_404())
                 else:
-                    result = Response(code=exc.code, message=exc.reason,
-                                      content=exc.explanation)
+                    result = Response(
+                        code=exc.code, message=exc.reason, content=exc.explanation
+                    )
                 writer.write(result.serial())
-            except Exception:
-                log.exception(f"exception: cid={cid}")
+            except Exception:  # pylint: disable=broad-exception-caught
+                log.exception("exception: cid=%s", cid)
                 reason_code = 500
                 if self.on_500:
                     result = Response(self.on_500())
@@ -106,26 +109,24 @@ class HTTPConnection:
                     if message:
                         message += (
                             f" status={reason_code}"
-                            f" t={time.perf_counter() - r_start:f}")
+                            f" t={time.perf_counter() - r_start:f}"
+                        )
                         log.info(message)
-                return keep_alive
+            return keep_alive
 
+        t_start = time.perf_counter()
+        silent = False
         try:
-            silent = False
-            t_start = time.perf_counter()
             peerhost, peerport = writer.get_extra_info("peername")[:2]
             cid = next(connection_sequence)
             open_msg = f"open server={self.name} " if self.name else ""
-            open_msg += (
-                f"socket={peerhost}:{peerport}"
-                f" cid={cid}")
+            open_msg += f"socket={peerhost}:{peerport}" f" cid={cid}"
             while await handle():
                 pass
         finally:
             if not silent:
-                log.info(
-                    f"close cid={cid}"
-                    f" t={time.perf_counter() - t_start:.6f}")
+                elapsed = f" t={time.perf_counter() - t_start:.6f}"
+                log.info("close cid=%s t=%s", cid, elapsed)
             try:
                 await writer.drain()
                 writer.close()

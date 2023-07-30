@@ -1,20 +1,26 @@
+"""inspect the parameters of web functions"""
 from dataclasses import dataclass
 from inspect import signature
 
-from meander import exception, Request
-from meander.param import types
+from meander import exception
+from meander.document import ServerDocument as Request
+from meander import types
 
 
-CACHE = {}
+CACHE = {}  # save the results of get_params
 
 
-def get_params(fn):
+def get_params(func):
+    """return list of Param instances for each arg/kwarg of 'func'"""
 
-    if fn in CACHE:
-        return CACHE[fn]
+    if func in CACHE:
+        return CACHE[func]
 
     @dataclass
     class Param:
+        """container for the attributes of one function parameter"""
+
+        # pylint: disable=too-many-instance-attributes
         type: type
         name: str
         no_annotation: bool
@@ -25,6 +31,7 @@ def get_params(fn):
         is_extra_kwarg: bool
 
     def get_type():
+        # pylint: disable=too-many-return-statements
         if par.annotation != par.empty:
             if par.annotation in (Request, types.ConnectionId, types.SkipParam):
                 return par.annotation
@@ -34,8 +41,9 @@ def get_params(fn):
                 return types.boolean
             if par.annotation == str:
                 return str
-            if isinstance(par.annotation, type) and \
-                    issubclass(par.annotation, types.ParamType):
+            if isinstance(par.annotation, type) and issubclass(
+                par.annotation, types.ParamType
+            ):
                 return par.annotation()
             if isinstance(par.annotation, types.ParamType):
                 return par.annotation
@@ -43,9 +51,8 @@ def get_params(fn):
 
     params = []
 
-    sig = signature(fn)
+    sig = signature(func)
     for par in sig.parameters.values():
-
         param_type = get_type()
 
         param = Param(
@@ -62,14 +69,16 @@ def get_params(fn):
         if not param.is_skip:
             params.append(param)
 
-    CACHE[fn] = params
+    CACHE[func] = params
 
     return params
 
 
-def call(fn, request: Request):
+def call(func, request: Request):
+    """call 'func' with args/kwargs from request"""
+    # pylint: disable=too-many-branches
 
-    params = get_params(fn)
+    params = get_params(func)
 
     args = []
     kwargs = {}
@@ -80,12 +89,12 @@ def call(fn, request: Request):
     else:
         content = request.content
         if not isinstance(content, dict):
-            raise exception.PayloadValueError(
-                "expecting content to be a dictionary")
+            raise exception.PayloadValueError("expecting content to be a dictionary")
         connection_id = f"con={request.connection_id} req={request.id}"
 
         if len(request.args) > len(params):
-            raise exception.ExtraAttributeError(args[len(params):])
+            valid = len(params)
+            raise exception.ExtraAttributeError(args[valid:])
 
         for value, param in zip(request.args, params):
             if param.name in content:
@@ -119,4 +128,4 @@ def call(fn, request: Request):
                 except ValueError as err:
                     raise exception.PayloadValueError(f"'{param.name}' is {err}")
 
-    return fn(*args, **kwargs)
+    return func(*args, **kwargs)  # will return coroutine if async

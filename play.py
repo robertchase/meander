@@ -6,8 +6,7 @@ import meander as web
 logging.basicConfig(level=logging.DEBUG)
 
 
-@web.payload_noid(a=int, b=web.param.String(min=3, max=5))
-def echo(a: int, b: str) -> dict:
+def echo(a: int, b: web.types.String(min=3, max=5)) -> dict:
     return dict(a=a, b=b)
 
 
@@ -16,8 +15,7 @@ async def pingping(request):
     return result.content
 
 
-@web.payload_noid(gather_extra_kwargs=True, a=str, b=str)
-def akk(a, b, **c):
+def akk(a: str, b: str, **c):
     return dict(a=a, b=b, c=c)
 
 

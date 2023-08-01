@@ -1,4 +1,4 @@
-"""containers for HTTP client and server documents"""
+"""containers for parsed HTTP client and server documents"""
 
 
 class Document:  # pylint: disable=too-many-instance-attributes

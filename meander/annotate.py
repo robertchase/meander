@@ -1,4 +1,4 @@
-"""inspect the parameters of web functions"""
+"""call a function with parameter values from a web.Request"""
 from dataclasses import dataclass
 from inspect import signature
 

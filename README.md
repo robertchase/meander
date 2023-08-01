@@ -5,9 +5,9 @@ tiny asnyc web
 
 The `meander` framework allows any python function to be used as an `API` endpoint. There are no variables magically injected into the frame, and no special decorators to worry about.
 
-This is accomplished by separating the wiring of the `API` from the construction of the code. You write a function, point to the function using `meander`, and the parameters used by the function are automatically pulled from the `HTTP Request`. Functions can be defined with or without the `async` keyword; `meander` will make the correct call.
+This is accomplished by separating the wiring of the `API` from the construction of the code. You write a function, point to the function using `meander`, and the parameters used by the function are automatically extracted from the `HTTP Request`. Functions can be defined with or without the `async` keyword; `meander` will make the correct call.
 
-This library allows you to take the functions you've developed for your `API` and easily use them from other places from within your codebase, including `cli` code and unit tests.
+This library allows you to take the functions you've developed for your `API` and easily use them in other places from within your codebase, including `cli` code and unit tests.
 
 ## basic operation
 
@@ -237,7 +237,7 @@ curl localhost:8080/add\?a=hello\&b=2
 
 ### default values
 
-Adding a default value to a function signature tells `meander` that the parameter is optional. If an optional parameter name is not found in the `content dict`, then `python` will supply the default value in the normal way.
+Adding a default value to a function signature tells `meander` that the parameter is optional. If an optional parameter name is not found in the `content dict`, then `meander` will let `python` supply the default value in the normal way.
 
 ```
 def add(a: int, b: int = 1):
@@ -322,3 +322,14 @@ web.add_server({
 ```
 
 This tells `meander` to execute the `authenticate` function before calling the `ping` handler. The `authenticate` function might find a problem and have to throw a `web.HTTPException(401, "Unauthorized")`, which will prevent the handler code from being executed and return the `401` to the caller.
+
+### the silent treatment
+
+Sometimes pieces of the infrastructure, like a load-balancer, will call an endpoint in order to verify the health of a service. This can flood the logs with messages that aren't related to client activity. These health-check calls can be silenced&mdash;meaning no log messages will be produced by `meander`. Let's silence the `ping` handler:
+
+```
+web.add_server({"/ping": {"silent": True, "handler": "pong"})
+web.run()
+```
+
+That's all there is to silencing a call. If the endpoint checks other resources, like a database or a cache service, and discovers a problem, then any messages produced by the handler will still appear in the log.

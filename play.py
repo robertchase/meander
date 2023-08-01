@@ -6,7 +6,7 @@ import meander as web
 logging.basicConfig(level=logging.DEBUG)
 
 
-def echo(a: int, b: web.types.String(min=3, max=5)) -> dict:
+def echo(a: int, b: web.types.String(min_length=3, max_length=5)) -> dict:
     return dict(a=a, b=b)
 
 

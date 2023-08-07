@@ -125,8 +125,8 @@ class HTTPConnection:  # pylint: disable=too-few-public-methods
                 pass
         finally:
             if not silent:
-                elapsed = f" t={time.perf_counter() - t_start:.6f}"
-                log.info("close cid=%s t=%s", cid, elapsed)
+                elapsed = f"t={time.perf_counter() - t_start:.6f}"
+                log.info("close cid=%s %s", cid, elapsed)
             try:
                 await writer.drain()
                 writer.close()

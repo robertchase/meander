@@ -4,8 +4,6 @@ import re
 
 ConnectionId = type("CONNECTIONID", (), {})
 
-SkipParam = type("SKIPPARAM", (), {})
-
 
 class ParamType:  # pylint: disable=too-few-public-methods
     """base class for user-defined types"""

@@ -26,14 +26,13 @@ def get_params(func):
         no_annotation: bool
         is_request: bool
         is_connection_id: bool
-        is_skip: bool
         is_required: bool
         is_extra_kwarg: bool
 
     def get_type():
         # pylint: disable=too-many-return-statements
         if par.annotation != par.empty:
-            if par.annotation in (Request, types.ConnectionId, types.SkipParam):
+            if par.annotation in (Request, types.ConnectionId):
                 return par.annotation
             if par.annotation == int:
                 return types.integer
@@ -55,19 +54,15 @@ def get_params(func):
     for par in sig.parameters.values():
         param_type = get_type()
 
-        param = Param(
+        params.append(Param(
             param_type,
             par.name,
             par.annotation == par.empty,
             param_type == Request,
             param_type == types.ConnectionId,
-            param_type == types.SkipParam,
             par.default == par.empty,
             par.kind == par.VAR_KEYWORD,
-        )
-
-        if not param.is_skip:
-            params.append(param)
+        ))
 
     CACHE[func] = params
 

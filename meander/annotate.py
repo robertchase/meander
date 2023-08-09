@@ -54,15 +54,17 @@ def get_params(func):
     for par in sig.parameters.values():
         param_type = get_type()
 
-        params.append(Param(
-            param_type,
-            par.name,
-            par.annotation == par.empty,
-            param_type == Request,
-            param_type == types.ConnectionId,
-            par.default == par.empty,
-            par.kind == par.VAR_KEYWORD,
-        ))
+        params.append(
+            Param(
+                param_type,
+                par.name,
+                par.annotation == par.empty,
+                param_type == Request,
+                param_type == types.ConnectionId,
+                par.default == par.empty,
+                par.kind == par.VAR_KEYWORD,
+            )
+        )
 
     CACHE[func] = params
 

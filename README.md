@@ -1,6 +1,8 @@
 # meander
 tiny asnyc web
 
+[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
+
 ## introduction
 
 The `meander` framework allows any python function to be used as an `API` endpoint. There are no variables magically injected into the frame, and no special decorators to worry about.
@@ -28,7 +30,7 @@ python3 my-server.py
 
 --
 
-Notes: 
+Notes:
 
 * *`meander` is in the PYTHONPATH.*
 * *The server will run until stopped from the terminal with `CTRL-C`.*
@@ -90,7 +92,7 @@ A local or imported function is registered by using the function name:
 ```
 def echo(request):
     return request.content
-    
+
 web.add_server({
     "/ping": "pong",
     "/echo": echo,
@@ -197,7 +199,7 @@ Here is a simple add function:
 ```
 def add(a, b):
 	return a + b
-	
+
 web.add_server({"/add": add})
 web.run()
 ```

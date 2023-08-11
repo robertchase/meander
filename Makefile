@@ -6,10 +6,6 @@ BIN := PATH=$(PATH) PYTHONPATH=$(PYTHONPATH) $(VENV)/bin
 py := $(BIN)/python3
 pip := $(py) -m pip
 
-.PHONY: jupyter
-jupyter:
-	$(py) -m jupyter notebook --notebook-dir=notebooks
-
 .PHONY: test
 test:
 	$(BIN)/pytest tests
@@ -21,6 +17,10 @@ lint:
 .PHONY: black
 black:
 	$(BIN)/black meander tests
+
+.PHONY: jupyter
+jupyter:
+	$(py) -m jupyter notebook --notebook-dir=notebooks
 
 .PHONY: certs
 certs:

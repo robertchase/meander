@@ -17,7 +17,8 @@ class Document:  # pylint: disable=too-many-instance-attributes
         self.content = {}
 
 
-class ServerDocument(Document):  # pylint: disable=too-few-public-methods
+# pylint: disable-next=too-few-public-methods,too-many-instance-attributes
+class ServerDocument(Document):
     """container for server-side http document data"""
 
     def __init__(self):

@@ -2,16 +2,21 @@ PYTHONPATH := $(PWD):.
 VENV := $(PWD)/.env
 
 PATH := $(VENV)/bin:$(PATH)
-py := PATH=$(PATH) PYTHONPATH=$(PYTHONPATH) $(VENV)/bin/python3
+BIN := PATH=$(PATH) PYTHONPATH=$(PYTHONPATH) $(VENV)/bin
+py := $(BIN)/python3
 pip := $(py) -m pip
 
 .PHONY: jupyter
 jupyter:
 	$(py) -m jupyter notebook --notebook-dir=notebooks
 
-.PHONY: play
-play:
-	@$(py) play.py
+.PHONY: lint
+lint:
+	$(BIN)/pylint meander tests
+
+.PHONY: black
+black:
+	$(BIN)/black meander tests
 
 .PHONY: certs
 certs:

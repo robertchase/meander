@@ -10,6 +10,10 @@ pip := $(py) -m pip
 jupyter:
 	$(py) -m jupyter notebook --notebook-dir=notebooks
 
+.PHONY: test
+test:
+	$(BIN)/pytest tests
+
 .PHONY: lint
 lint:
 	$(BIN)/pylint meander tests

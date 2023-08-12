@@ -10,10 +10,14 @@ from meander import types
         (1, True, True),
         ("1", True, True),
         (True, True, True),
+        ("true", True, True),
+        ("TrUe", True, True),
         (2, False, None),
         (0, True, False),
         ("0", True, False),
         (False, True, False),
+        ("false", True, False),
+        ("FALse", True, False),
     ),
 )
 def test_boolean(value, is_valid, result):

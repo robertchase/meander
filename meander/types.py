@@ -11,6 +11,10 @@ class ParamType:  # pylint: disable=too-few-public-methods
 
 def boolean(value):
     """boolean type that accepts 1, "1", True, 0, "0", False"""
+    if isinstance(value, str) and value.lower() == "true":
+        return True
+    if isinstance(value, str) and value.lower() == "false":
+        return False
     if value in (1, "1", True):
         return True
     if value in (0, "0", False):

@@ -11,7 +11,7 @@ tiny asnyc web
 
 The `meander` package allows any python function to be used as an `API` endpoint. There are no variables magically injected into the frame, and no special decorators to worry about.
 
-This is accomplished by separating the wiring of the `API` from the construction of the code. You write a function, point to the function using `meander`, and the parameters used by the function are automatically extracted from the `HTTP Request`. Functions can be defined with or without the `async` keyword; `meander` will make the correct call.
+This is accomplished by separating the wiring of the `API` from the construction of the code. Point to a normal python function using `meander`, and the function's parameters are automatically extracted from the `HTTP Request`. Functions can be defined with or without the `async` keyword and will be called appropriately.
 
 This package allows you to take the functions you've developed for your `API` and easily use them in other places from within your codebase, including `cli` code and unit tests.
 
@@ -19,7 +19,7 @@ This package allows you to take the functions you've developed for your `API` an
 
 ### echo
 
-This function, `echo`, takes three parameters, the third parameter being optional with a `None` default. The annotations are standard `python` syntax, but only provide hints at the values that the function expects. When wired to `meander`, these values are pulled from the `HTTP Request` by name, and passed to the function *after proper type validation and coersion based on the annotations*.
+This function, `echo`, takes three parameters, the third parameter being optional. The annotations are standard `python` syntax, but only provide hints at the values that the function expects. When wired to `meander`, these values are pulled from the `HTTP Request` by name, and passed to the function *after being validated&mdash;and converted to the proper type&mdash;based on the parameter's annotations*.
 
 ```
 def echo(a: int, b: bool, c: str = None):
@@ -42,14 +42,16 @@ web.run()
 
 ### test out the server
 
-Start the server and open a new terminal to run `curl`.
+Start the server by running the python program. Be sure that `meander` is in the `PYTHONPATH`. When you're finished, stop the server with `CNTL-c`.
+
+Open a new terminal to run `curl`.
 
 ```
 curl localhost:8080/echo
 missing required attribute: a
 ```
 
-We see that the required parameter `a` is missing. This is returned in a `400 Bad Request` response.
+We see that the required parameter `a` is missing. This is returned in a `400 Bad Request` response. Use curl's `-v` option to see more about the exchange with the server.
 
 Provide a value for `a`.
 
@@ -67,7 +69,7 @@ curl localhost:8080/echo\?a=1\&b=0
 {"a": 1, "b": false, "c": null}
 ```
 
-The `echo` function is called and returns a dict of the parameters containing the proper variable types based on the function's annotations. This is returned as an `application/json` response, which is inferred from the dict data structure that is returned from the `echo` function.
+The `echo` function is called and returns a dict of the parameters containing the proper variable types based on the function's annotations. This is returned as an `application/json` response, which is inferred from the `echo` function's return value.
 
 What happens if we provide values that don't match the function's annotations?
 

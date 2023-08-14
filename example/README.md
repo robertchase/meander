@@ -24,7 +24,7 @@ curl -v localhost:8080/ping
 
 Stop the server with `CNTL-c`.
 
-### logging ping
+### enabling logging
 
 This is the same as the simple ping, with logging enabled.
 
@@ -45,11 +45,29 @@ INFO:meander:request cid=1 rid=1 method=GET resource=/ping status=200 t=0.000140
 INFO:meander:close cid=1 t=0.000760
 ```
 
-### function ping
+### using a local function as a handler
 
 This performs a ping from a locally defined function.
 
 [function ping](function-ping.py)
+
+### using a non-local function as a handler
+
+If all of the functions that handle `meander` requests are local or imported, then the namespace of the module that makes the `add_server` call can get quite full. Another way to specify a handler function in the add_server call is to use the dot-delimited path to the function.
+
+When `meander` sees a string value for the handler that contains one or more "." characters, it dynamically loads the code when add_server is called.
+
+Here is an server that *references* the `ping` function from the `function-ping` module:
+
+[reference ping](reference-ping.py)
+
+### silent handling
+
+Sometimes pieces of the infrastructure, like a load-balancer, will call an endpoint in order to verify the health of a service. This can flood the logs with messages that aren't related to client activity. These health-check calls can be silenced&mdash;meaning no log messages will be produced by `meander`.
+
+This server defines a `GET ping` call that `meander` will silently run. Notice that the log message produced by the handler still appears in the log.
+
+[silent ping](skip-log-ping.py)
 
 ### echo server
 
@@ -76,6 +94,52 @@ curl -v localhost:8080/echo -XPUT -d a=10 -d b=20
 ```
 
 [echo-get-put](echo-put.py)
+
+### automatic argument assignment
+
+The variables defined in a `GET` call's query string, or in the `form` or `json` content of another method's body are available for assignment to a function's arguments.
+
+Here a simple add function that adds two required parameters together:
+
+[simple add](add.py)
+
+```
+curl localhost:8080/add\?a=10\&b=20
+1020
+```
+
+We can see from the result, `1020`, that the two parameters were treated as strings and concatenated. If the purpose is to add `10` and `20`, then it makes sense to force the parameters to integer values. When the `int` annotation is added to the function signature, then `meander` will automatically do the conversion.
+
+[add numbers](add-numbers.py)
+
+Here is the result:
+
+```
+curl localhost:8080/add\?a=10\&b=20
+30
+```
+
+If `a` or `b` are not specified, or if their values cannot be coerced into integers, then a `400 Bad Request` will be returned along with a message.
+
+```
+curl localhost:8080/add\?b=2
+missing required attribute: a
+```
+
+```
+curl localhost:8080/add\?a=hello\&b=2
+'a' is not an integer
+```
+
+By giving the second parameter a default value of `1`, we make it optional and change the function to an add/increment.
+
+[add or increment](add-or-increment.py)
+
+```
+curl localhost:8080/add\?a=41
+4:w
+2
+```
 
 ### async handler
 
@@ -109,52 +173,3 @@ Using *before* allows for the separation of `HTTP` processing from the handler's
 [before](before.py)
 
 This provides two `GET` endpoints, `/value` and `/value/required` that are looking for an `HTTP` header named `x-value` which gets added to `request.context` with the key `value`. If the `header` is not present, `/value` will use `default-value` and `/value/required` will return a `400 Bad Request`.
-
-### automatic argument assignment
-
-The variables defined in a `GET` call's query string, or in the `form` or `json` content of another method's body are available for assignment to a function's arguments.
-
-Now that we understand how `HTTP` data is converted into `dict` data in the `content` attribute of the `request`, we can have `meander` automatically supply values from that `dict` into a function.
-
-Here is a simple add function:
-
-```
-def add(a, b):
-	return a + b
-
-web.add_server({"/add": add})
-web.run()
-```
-
-Here, `meander` will see the parameter names and automatically look up the values by name from the `dict` in the `content` attribute. Lets try it:
-
-```
-curl localhost:8080/add\?a=10\&b=20
-1020
-```
-
-We can see from the result, `1020`, that the two parameters were treated as strings and concatenated. If the purpose is to add `10` and `20`, then it makes sense to force the parameters to integer values. When the `int` annotation is added to the function signature, then `meander` will automatically do the conversion.
-
-```
-def add(a: int, b: int):
-    return a + b
-```
-
-Here is the result:
-
-```
-curl localhost:8080/add\?a=10\&b=20
-30
-```
-
-If `a` or `b` are not specified, or if their values cannot be coerced into integers, then a `400 Bad Request` will be returned along with a message.
-
-```
-curl localhost:8080/add\?b=2
-missing required attribute: a
-```
-
-```
-curl localhost:8080/add\?a=hello\&b=2
-'a' is not an integer
-```

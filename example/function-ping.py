@@ -13,5 +13,6 @@ def ping():
     return "pong"
 
 
-web.add_server({"/ping": ping})
-web.run()
+if __name__ == "__main__":  # allow module to be imported without running
+    web.add_server({"/ping": ping})
+    web.run()

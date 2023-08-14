@@ -29,13 +29,9 @@ certs:
      -nodes -keyout tmp.com.key -out tmp.com.crt -subj "/CN=example.com" \
      -addext "subjectAltName=DNS:example.com,DNS:*.example.com,IP:10.0.0.1"
 
-.PHONY: pythonpath
-pythonpath:
-	@echo $(PYTHONPATH)
-
-.PHONY: venvdir
-venvdir:
-	@echo $(VENV)
+.PHONY: bin
+bin:
+	@echo $(BIN)
 
 .PHONY: venv
 venv:

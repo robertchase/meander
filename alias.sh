@@ -1,9 +1,5 @@
-_PYTHON="PYTHONPATH=$(make pythonpath) $(make venvdir)/bin/python"
-
-alias black="$(make venvdir)/bin/black"
-alias pylint="$(make venvdir)/bin/pylint"
-alias pytest="$(make venvdir)/bin/pytest"
-
-unset _PYTHON
+alias black="$(make bin)/black"
+alias pylint="$(make bin)/pylint"
+alias pytest="$(make bin)/pytest"
 
 alias un-alias="unalias black pylint pytest"

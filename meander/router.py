@@ -79,6 +79,10 @@ class Router:  # pylint: disable=too-few-public-methods
                 val = {"GET": val}
 
             for method, path in val.items():
+
+                if method in ("handler", "silent", "before"):
+                    raise Exception(f"method name missing in ({method}: {path})")
+
                 # treat dict as kwargs to a handler class
                 if isinstance(path, dict):
                     path["handler"] = lookup(path["handler"])

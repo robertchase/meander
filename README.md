@@ -19,7 +19,7 @@ This package allows you to take the functions you've developed for your `API` an
 
 ### echo
 
-This function, `echo`, takes three parameters, the third parameter being optional. The annotations are standard `python` syntax, but only provide hints at the values that the function expects. When wired to `meander`, these values are pulled from the `HTTP Request` by name, and passed to the function *after being validated&mdash;and converted to the proper type&mdash;based on the parameter's annotations*.
+This function, `echo`, takes three parameters. The annotations (`int`, `bool` and `str`) are standard `python` syntax, but only provide hints at the values that the function expects. When wired to `meander`, these values are pulled from the `HTTP Request` by name, and passed to the function *after being validated&mdash;and converted to the proper type&mdash;based on the parameter's annotations*.
 
 ```
 def echo(a: int, b: bool, c: str = None):
@@ -42,7 +42,7 @@ web.run()
 
 ### test out the server
 
-Start the server by running the python program. Be sure that `meander` is in the `PYTHONPATH`. When you're finished, stop the server with `CNTL-c`.
+Start the server by running the python program. Be sure that `meander` is in the `PYTHONPATH`. When you're finished, stop the server with `CTRL-c`.
 
 Open a new terminal to run `curl`.
 

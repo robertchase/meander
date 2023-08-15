@@ -87,17 +87,18 @@ class Router:  # pylint: disable=too-few-public-methods
                     path["handler"] = lookup(path["handler"])
                     hdlr = Handler(**path)
 
-                # simple string
-                elif isinstance(path, str) and "." not in path:
-                    hdlr = Handler(simple_string(path))
-
-                # directly replace dot-delimited str with callable
+                # replace str with callable
                 elif isinstance(path, str):
                     hdlr = Handler(lookup(path))
 
                 # treat as a callable
                 else:
                     hdlr = Handler(path)
+
+                if not callable(hdlr.handler):
+                    raise AttributeError(
+                        f"{path} is not callable in ({method}: {path})"
+                    )
 
                 val[method] = hdlr
 
@@ -113,7 +114,7 @@ class Router:  # pylint: disable=too-few-public-methods
 
 
 def simple_string(fixed_return):
-    """return a callable that returns "s" when called with a single arg"""
+    """return a callable that returns "fixed_return" when called with a single arg"""
 
     def _simple_string(arg):  # pylint: disable=unused-argument
         return fixed_return

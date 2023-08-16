@@ -52,7 +52,7 @@ class Server(Runnable):
         ).serve_forever()
 
 
-def add_server(
+def add_server(  # pylint: disable=too-many-arguments
     routes: dict,
     name: str = None,
     port: int = 8080,

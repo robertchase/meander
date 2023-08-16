@@ -109,7 +109,7 @@ request.args = []
 
 
 def call_request(abc):
-    """expect request"""
+    """expect content"""
     return abc
 
 
@@ -136,7 +136,7 @@ def call_various(test1: int, test2: str, test4: bool, test10: int = 123):
 @pytest.mark.parametrize(
     "func,result",
     (
-        (call_request, request),
+        (call_request, request.content),
         (call_int, {"a": 100, "b": 100, "c": 1}),
         (call_str, {"a": "100", "b": "100", "c": "False"}),
         (call_bool, {"a": True, "b": False}),

@@ -81,8 +81,8 @@ def call(func, request: Request):
     kwargs = {}
     if len(params) == 0:
         pass
-    elif len(params) == 1 and (params[0].no_annotation or params[0].is_request):
-        args.append(request)
+    elif len(params) == 1 and (params[0].no_annotation):
+        args.append(request.content)
     else:
         content = request.content
         if not isinstance(content, dict):

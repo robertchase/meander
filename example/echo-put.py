@@ -7,8 +7,8 @@ import meander as web
 logging.basicConfig(level=logging.INFO)
 
 
-def echo(request):
-    return request.content
+def echo(content):
+    return content
 
 
 web.add_server({

@@ -10,7 +10,7 @@ log = logging.getLogger(__package__)
 
 web.add_server({"/ping": {
         "GET": {
-            "handler": "example.function-ping.ping",
+            "handler": "examples.function-ping.ping",
             "silent": True,
         },
     },

@@ -8,5 +8,5 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__package__)
 
 
-web.add_server({"/ping": "example.function-ping.ping"})
+web.add_server({"/ping": "examples.function-ping.ping"})
 web.run()

@@ -39,6 +39,7 @@ class HTTPConnection:  # pylint: disable=too-few-public-methods
             r_start = time.perf_counter()
             try:  # pylint: disable=too-many-nested-blocks
                 if request := await parse(reader):
+                    r_start = time.perf_counter()
                     rid = next(request_sequence)
                     reason_code = 200
                     message = (

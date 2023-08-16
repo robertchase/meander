@@ -79,12 +79,14 @@ def call(func, request: Request):
 
     args = []
     kwargs = {}
+    content = request.content
     if len(params) == 0:
         pass
     elif len(params) == 1 and (params[0].no_annotation):
-        args.append(request.content)
+        args.append(content)
+    elif len(params) == 1 and (params[0].is_request):
+        args.append(request)
     else:
-        content = request.content
         if not isinstance(content, dict):
             raise exception.PayloadValueError("expecting content to be a dictionary")
         connection_id = f"con={request.connection_id} req={request.id}"

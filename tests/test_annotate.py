@@ -1,7 +1,7 @@
 """test annotation inspection"""
 import pytest
 
-from meander import annotate, types, Request
+from meander import annotate, types, Request, exception
 
 
 def func1():
@@ -108,7 +108,12 @@ request.content = {
 request.args = []
 
 
-def call_request(abc):
+def call_request(abc: Request):
+    """expect request"""
+    return abc
+
+
+def call_content(abc):
     """expect content"""
     return abc
 
@@ -136,7 +141,8 @@ def call_various(test1: int, test2: str, test4: bool, test10: int = 123):
 @pytest.mark.parametrize(
     "func,result",
     (
-        (call_request, request.content),
+        (call_request, request),
+        (call_content, request.content),
         (call_int, {"a": 100, "b": 100, "c": 1}),
         (call_str, {"a": "100", "b": "100", "c": "False"}),
         (call_bool, {"a": True, "b": False}),
@@ -146,3 +152,12 @@ def call_various(test1: int, test2: str, test4: bool, test10: int = 123):
 def test_call(func, result):
     """test various function signatures"""
     assert annotate.call(func, request) == result
+
+
+def test_non_json_call():
+    """check for non-json content when annotated arguments are specified"""
+    non_json_request = Request()
+    non_json_request.content = ""
+    non_json_request.args = []
+    with pytest.raises(exception.PayloadValueError):
+        annotate.call(call_int, non_json_request)

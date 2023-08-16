@@ -22,6 +22,7 @@ class Server(Runnable):
     name: str
     routes: dict
     port: int
+    base_url: str = None
     ssl_certfile: str = None
     ssl_keyfile: str = None
 
@@ -44,7 +45,7 @@ class Server(Runnable):
 
         return (
             await asyncio.start_server(
-                HTTPConnection(self.name, Router(self.routes)),
+                HTTPConnection(self.name, Router(self.routes, self.base_url)),
                 port=self.port,
                 ssl=context,
             )
@@ -55,10 +56,11 @@ def add_server(
     routes: dict,
     name: str = None,
     port: int = 8080,
+    base_url: str = None,
     ssl_certfile: str = None,
     ssl_keyfile: str = None,
 ) -> Server:
     """define and add a new server for meander to run"""
-    server = Server(name, routes, port, ssl_certfile, ssl_keyfile)
+    server = Server(name, routes, port, base_url, ssl_certfile, ssl_keyfile)
     add_runnable(server)
     return server

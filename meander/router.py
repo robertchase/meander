@@ -10,7 +10,7 @@ Route = namedtuple("Route", "handler, args, silent, before")
 class Router:  # pylint: disable=too-few-public-methods
     """create a router for http requests"""
 
-    def __init__(self, routes):
+    def __init__(self, routes, base_url=None):
         """
         "routes" is a dict of the form:
              {
@@ -49,6 +49,8 @@ class Router:  # pylint: disable=too-few-public-methods
                  },
              }
 
+        "base_url", if present, will be appended to every pattern in "routes"
+
          the router instance is used like this:
 
              if route := router(http_resource, http_method):
@@ -75,6 +77,9 @@ class Router:  # pylint: disable=too-few-public-methods
         """
         self._routes = {}
         for url, val in routes.items():
+            if base_url:
+                url = base_url.rstrip("/") + "/" + url.lstrip("/")
+
             if not isinstance(val, dict):
                 val = {"GET": val}
 

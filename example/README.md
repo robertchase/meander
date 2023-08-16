@@ -99,7 +99,7 @@ curl -v localhost:8080/echo -XPUT -d a=10 -d b=20
 
 The variables defined in a `GET` call's query string, or in the `form` or `json` content of another method's body are available for assignment to a function's arguments.
 
-Here a simple add function that adds two required parameters together:
+Here is a simple add function that adds two required parameters together:
 
 [simple add](add.py)
 
@@ -137,8 +137,7 @@ By giving the second parameter a default value of `1`, we make it optional and c
 
 ```
 curl localhost:8080/add\?a=41
-4:w
-2
+42
 ```
 
 ### async handler
@@ -166,7 +165,7 @@ One or more functions can be executed *before* the handler gets called. These ca
 
 ##### why is this useful?
 
-Using *before* allows for the separation of `HTTP` processing from the handler's logic. Take, for instance, performing authenticaion with `HTTP header` values. It makes more sense to perform this check prior to calling the handler so that the handler is independent from the `HTTP` context. If the authentication check was performed in a *decorator* or from within the handler itself, then the handler is no longer callable without a full `HTTP Request` object. 
+Using *before* allows for the separation of `HTTP` processing from the handler's logic. Take, for instance, performing authenticaion with `HTTP header` values. It makes more sense to perform this check prior to calling the handler so that the handler is independent from the `HTTP` context. If the authentication check was performed in a *decorator* or from within the handler itself, then the handler is no longer callable without a full `HTTP Request` object.
 
 ##### example use
 

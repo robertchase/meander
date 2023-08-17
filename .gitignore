@@ -3,3 +3,6 @@ tmp*
 *.swp
 *.pyc
 *-checkpoint.ipynb
+build/
+dist/
+meander.egg-info/

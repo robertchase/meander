@@ -26,16 +26,14 @@ class HTMLFormat:  # pylint: disable=too-few-public-methods
         query="",
         host=None,
     ):
+        self.headers = {} if not headers else headers
         if is_response:
             self.code = code
             self.message = "OK" if code == 200 and message == "" else message
-            self.headers = {} if not headers else headers
             self.status = f"HTTP/1.1 {self.code} {self.message}"
         else:
             if host:
-                if not headers:
-                    headers = {}
-                headers["HOST"] = host
+                self.headers["HOST"] = host
 
             if method == "GET":
                 query = urlparse.parse_qsl(query)
@@ -47,10 +45,7 @@ class HTMLFormat:  # pylint: disable=too-few-public-methods
                     raise Exception("content not allowed on GET")
                 if query:
                     path += "?" + urlparse.urlencode(query)
-
-            self.headers = headers
             self.status = f"{method} {path} HTTP/1.1"
-
         headers = self.headers
 
         header_keys = [k.lower() for k in headers.keys()]

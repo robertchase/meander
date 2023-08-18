@@ -1,10 +1,8 @@
 """one-shot http client"""
-import asyncio
 import logging
 import urllib.parse as urlparse
 
-from meander.parser import HTTPReader
-from meander.formatter import HTMLFormat
+from meander.client import Client
 
 
 log = logging.getLogger(__name__)
@@ -27,67 +25,28 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     """make client call and return response"""
 
     parsed_url = _URL(url)
-
-    if bearer:
-        if not headers:
-            headers = {}
-        headers["Authorization"] = f"Bearer {bearer}"
-
-    reader, writer = await asyncio.open_connection(
-        parsed_url.host, parsed_url.port, ssl=parsed_url.is_ssl
+    client = Client(
+        host=parsed_url.host,
+        port=parsed_url.port,
+        is_ssl=parsed_url.is_ssl,
+        verbose=verbose,
     )
-    http_reader = HTTPReader(
-        reader,
-        is_server=False,
-        timeout=timeout,
-        active_timeout=active_timeout,
-        max_read_size=max_read_size,
-    )
-
-    payload = HTMLFormat(
-        is_response=False,
+    await client.open()
+    client.write(
         method=method,
         path=parsed_url.path,
-        query=parsed_url.query,
-        headers=headers,
+        query_string=parsed_url.query,
         content=content,
-        host=parsed_url.host,
+        headers=headers,
         content_type=content_type,
         charset=charset,
         compress=compress,
+        bearer=bearer,
+        close=True,
     )
-    writer.write(payload.serial())
-
-    if verbose:
-        log.debug(payload)
-
-    result = await http_reader.read_document()
-
-    if verbose:
-        log.debug("%s %s", result.http_status_code, result.http_status_message)
-        log.debug(result.http_headers)
-        log.debug(result.http_content)
-
-    writer.close()
-    await writer.wait_closed()
-
+    result = await client.read(timeout, active_timeout, max_read_size)
+    await client.close()
     return result
-
-
-def _method(name):
-    """create request call bound to a method"""
-
-    async def inner(url, *args, **kwargs):
-        return await call(url, name, *args, **kwargs)
-
-    return inner
-
-
-call.get = _method("GET")
-call.post = _method("POST")
-call.put = _method("PUT")
-call.patch = _method("PATCH")
-call.delete = _method("DELETE")
 
 
 class _URL:  # pylint: disable=too-few-public-methods

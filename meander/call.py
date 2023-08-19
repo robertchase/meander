@@ -1,6 +1,6 @@
 """one-shot http client"""
 import logging
-import urllib.parse as urlparse
+from urllib.parse import urlparse
 
 from meander.client import Client
 
@@ -25,13 +25,8 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     """make client call and return response"""
 
     parsed_url = _URL(url)
-    client = Client(
-        host=parsed_url.host,
-        port=parsed_url.port,
-        is_ssl=parsed_url.is_ssl,
-        verbose=verbose,
-    )
-    await client.open()
+    client = Client(verbose=verbose)
+    await client.open(parsed_url.host, parsed_url.port, is_ssl=parsed_url.is_ssl)
     client.write(
         method=method,
         path=parsed_url.path,
@@ -53,7 +48,7 @@ class _URL:  # pylint: disable=too-few-public-methods
     """url parser"""
 
     def __init__(self, url):
-        parsed = urlparse.urlparse(url)
+        parsed = urlparse(url)
         self.is_ssl = parsed.scheme == "https"
         if ":" in parsed.netloc:
             self.host, self.port = parsed.netloc.split(":", 1)
@@ -62,5 +57,5 @@ class _URL:  # pylint: disable=too-few-public-methods
             self.host = parsed.netloc
             self.port = 443 if self.is_ssl else 80
         self.resource = parsed.path + (f"?{parsed.query if parsed.query else ''}")
-        self.path = parsed.path
+        self.path = parsed.path if parsed.path else "/"
         self.query = parsed.query

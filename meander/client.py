@@ -1,5 +1,6 @@
 """http client"""
 import asyncio
+from dataclasses import dataclass
 import logging
 
 from meander.parser import HTTPReader
@@ -9,22 +10,17 @@ from meander.formatter import HTMLFormat
 log = logging.getLogger(__name__)
 
 
+@dataclass
 class Client:
     """async http client"""
 
-    def __init__(self, host, port, is_ssl=False, verbose=False):
-        self.host = host
-        self.port = port
-        self.is_ssl = is_ssl
-        self.verbose = verbose
-        self.reader = None
-        self.writer = None
+    verbose: bool = False
 
-    async def open(self):
-        """open a connection to the host specified in the url"""
-        self.reader, self.writer = await asyncio.open_connection(
-            self.host, self.port, ssl=self.is_ssl
-        )
+    async def open(self, host, port, is_ssl=False):
+        """open a connection to host/port"""
+        # pylint: disable=attribute-defined-outside-init
+        self.host = host
+        self.reader, self.writer = await asyncio.open_connection(host, port, ssl=is_ssl)
 
     def write(  # pylint: disable=too-many-arguments
         self,

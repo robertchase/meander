@@ -36,15 +36,20 @@ class HTMLFormat:  # pylint: disable=too-few-public-methods
                 self.headers["HOST"] = host
 
             if method == "GET":
-                query = urlparse.parse_qsl(query)
-                if isinstance(content, dict):
-                    query.extend(_normalize(content))
+                if content:
+                    if query:
+                        raise AttributeError(
+                            "query string and content both specified on GET"
+                        )
+                    if not isinstance(content, dict):
+                        raise AttributeError("expecting dict content for GET")
+                    query = _normalize(content)
                     content = ""
-                elif content:
-                    # pylint: disable-next=broad-exception-raised
-                    raise Exception("content not allowed on GET")
+                else:
+                    query = urlparse.parse_qsl(query)
                 if query:
                     path += "?" + urlparse.urlencode(query)
+
             self.status = f"{method} {path} HTTP/1.1"
         headers = self.headers
 

@@ -6,3 +6,4 @@ tmp*
 build/
 dist/
 meander.egg-info/
+notebooks/

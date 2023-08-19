@@ -18,10 +18,6 @@ lint:
 black:
 	$(BIN)/black meander tests
 
-.PHONY: jupyter
-jupyter:
-	$(py) -m jupyter notebook --notebook-dir=notebooks
-
 .PHONY: certs
 certs:
 	# https://stackoverflow.com/questions/10175812/how-to-generate-a-self-signed-ssl-certificate-using-openssl/41366949#41366949

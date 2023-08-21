@@ -1,106 +1,133 @@
-"""formatters for HTTP responses"""
+"""formatters for HTTP documents"""
+from dataclasses import dataclass
 import gzip
 import json
 import time
+from typing import Any
 import urllib.parse as urlparse
 
 
-class HTMLFormat:  # pylint: disable=too-few-public-methods
-    """form an http document"""
+@dataclass
+class HTMLFormat:  # pylint: disable=too-many-instance-attributes
+    """format an http document"""
 
-    def __init__(  # pylint: disable=too-many-arguments, too-few-public-methods, too-many-branches, too-many-locals, too-many-statements
-        self,
-        content="",
-        headers=None,
-        content_type=None,
-        charset="utf-8",
-        close=False,
-        compress=False,
-        is_response=True,
-        # response
-        code=200,
-        message="",
-        # request
-        method="GET",
-        path="/",
-        query="",
-        host=None,
-    ):
-        self.headers = {} if not headers else headers
-        if is_response:
-            self.code = code
-            self.message = "OK" if code == 200 and message == "" else message
-            self.status = f"HTTP/1.1 {self.code} {self.message}"
+    content: Any = ""
+    headers: dict = None
+    content_type: str = None
+    charset: str = "utf-8"
+    close: bool = False
+    compress: bool = False
+    is_response: bool = True
+
+    # response
+    code: int = 200
+    message: str = ""
+
+    # request
+    method: str = "GET"
+    path: str = "/"
+    query: dict | str = ""
+    host: str = None
+
+    def __post_init__(self):
+        self.headers = {} if not self.headers else self.headers
+        if self.is_response:
+            self.fmt_response()
         else:
-            if host:
-                self.headers["HOST"] = host
+            self.fmt_request()
+        self.fmt_body()
 
-            if method == "GET":
-                if content:
-                    if query:
-                        raise AttributeError(
-                            "query string and content both specified on GET"
-                        )
-                    if not isinstance(content, dict):
-                        raise AttributeError("expecting dict content for GET")
-                    query = _normalize(content)
-                    content = ""
-                else:
-                    query = urlparse.parse_qsl(query)
-                if query:
-                    path += "?" + urlparse.urlencode(query)
+    def fmt_response(self):
+        """response specific formatting"""
 
-            self.status = f"{method} {path} HTTP/1.1"
-        headers = self.headers
+        self.message = "OK" if self.code == 200 and self.message == "" else self.message
+        self.status = f"HTTP/1.1 {self.code} {self.message}"
 
-        header_keys = [k.lower() for k in headers.keys()]
-        header_lower = {key.lower(): value for key, value in headers.items()}
+    def fmt_request(self):
+        """request specific formatting"""
+        if self.host:
+            self.headers["HOST"] = self.host
 
-        if not content_type:
-            content_type = header_lower.get("content-type", None)
-
-        if not content_type:
-            if isinstance(content, int):
-                content = str(content)
-
-            if isinstance(content, (list, dict)):
-                content_type = "application/json"
+        if self.method == "GET":
+            if self.content:
+                if self.query:
+                    raise AttributeError(
+                        "query string and content both specified on GET"
+                    )
+                if not isinstance(self.content, dict):
+                    raise AttributeError("expecting dict content for GET")
+                self.query = _normalize(self.content)
+                self.content = ""
             else:
-                content_type = "text/plain"
+                self.query = urlparse.parse_qsl(self.query)
+            if self.query:
+                self.path += "?" + urlparse.urlencode(self.query)
 
-        if content:
-            if "content-type" not in header_keys:
-                if content_type in ("json", "application/json"):
-                    content = json.dumps(content)
-                    content_type = "application/json"
-                elif content_type in ("form", "application/x-www-form-urlencoded"):
-                    content_type = "application/x-www-form-urlencoded"
-                    content = urlparse.urlencode(content)
-                headers["Content-Type"] = content_type
+        self.status = f"{self.method} {self.path} HTTP/1.1"
 
-            if charset:
-                content = content.encode(charset)
-                headers["Content-Type"] += f"; charset={charset}"
+    def fmt_body(self):
+        """format body for both response and request documents"""
 
-        if compress:
-            content = gzip.compress(content)
-            headers["Content-Encoding"] = "gzip"
+        header_lower = {key.lower(): value for key, value in self.headers.items()}
+        if self.content:
+            self.fmt_content(header_lower)
+        else:
+            self.content_type = None
+        self.fmt_headers(header_lower)
 
-        if "date" not in header_keys:
-            headers["Date"] = time.strftime(
+    def fmt_content(self, header_lower):
+        """normalize content and content_type
+
+        focus primarily on form and json content in order to help with
+        json/http exchanges. other content types will pass through unscathed.
+        """
+
+        if not self.content_type:
+            self.content_type = header_lower.get("content-type", None)
+
+        if not self.content_type:
+            if isinstance(self.content, int):
+                self.content = str(self.content)
+
+            if isinstance(self.content, (list, dict)):
+                self.content_type = "application/json"
+            else:
+                self.content_type = "text/plain"
+
+        if self.content_type in ("json", "application/json"):
+            self.content = json.dumps(self.content)
+            self.content_type = "application/json"
+        elif self.content_type in ("form", "application/x-www-form-urlencoded"):
+            self.content_type = "application/x-www-form-urlencoded"
+            self.content = urlparse.urlencode(self.content)
+
+        if self.charset:
+            self.content = self.content.encode(self.charset)
+            self.content_type += f"; charset={self.charset}"
+
+        if self.compress:
+            self.content = gzip.compress(self.content)
+
+    def fmt_headers(self, header_lower):
+        """add some standard headers"""
+
+        if self.content_type:
+            self.headers["Content-Type"] = self.content_type
+
+        if self.compress:
+            self.headers["Content-Encoding"] = "gzip"
+
+        if "date" not in header_lower:
+            self.headers["Date"] = time.strftime(
                 "%a, %d %b %Y %H:%M:%S %Z", time.localtime()
             )
 
-        if "content-length" not in header_keys:
-            headers["Content-Length"] = len(content)
+        if "content-length" not in header_lower:
+            self.headers["Content-Length"] = len(self.content)
 
-        if close:
-            if "connection" not in header_keys:
-                headers["Connection"] = "close"
-
-        self.headers = headers
-        self.content_type = content_type
-        self.content = content
+        if self.close:
+            if "connection" not in header_lower:
+                self.headers["Connection"] = "close"
 
     def serial(self):
         """return formatted response"""

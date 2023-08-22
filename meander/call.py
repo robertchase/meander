@@ -44,6 +44,22 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     return result
 
 
+def _method(name):
+    """create request call bound to a method"""
+
+    async def inner(url, *args, **kwargs):
+        return await call(url, name, *args, **kwargs)
+
+    return inner
+
+
+call.get = _method("GET")
+call.post = _method("POST")
+call.put = _method("PUT")
+call.patch = _method("PATCH")
+call.delete = _method("DELETE")
+
+
 class _URL:  # pylint: disable=too-few-public-methods
     """url parser"""
 

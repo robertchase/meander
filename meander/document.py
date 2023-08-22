@@ -16,6 +16,20 @@ class Document:  # pylint: disable=too-many-instance-attributes
         self.is_keep_alive = True
         self.content = {}
 
+    @property
+    def content_as_object(self):
+        """convenience attribute returning dot-notation-access content"""
+
+        class Container:
+            """turn dict into object"""
+
+            def __init__(self, data: dict):
+                self.__dict__.update(**data)
+
+        if not isinstance(self.content, dict):
+            raise AttributeError("content is not a dict")
+        return Container(self.content)
+
 
 # pylint: disable-next=too-few-public-methods,too-many-instance-attributes
 class ServerDocument(Document):

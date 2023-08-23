@@ -8,20 +8,20 @@ import urllib.parse as urlparse
 
 
 @dataclass
-class HTMLFormat:  # pylint: disable=too-many-instance-attributes
+class HTTPFormat:  # pylint: disable=too-many-instance-attributes
     """format an http document"""
 
     content: Any = ""
+
+    code: int = 200  # response
+    message: str = ""  # response
+
     headers: dict = None
     content_type: str = None
     charset: str = "utf-8"
     close: bool = False
     compress: bool = False
     is_response: bool = True
-
-    # response
-    code: int = 200
-    message: str = ""
 
     # request
     method: str = "GET"
@@ -35,7 +35,7 @@ class HTMLFormat:  # pylint: disable=too-many-instance-attributes
             self.fmt_response()
         else:
             self.fmt_request()
-        self.fmt_body()
+        self.fmt_common()
 
     def fmt_response(self):
         """response specific formatting"""
@@ -65,8 +65,8 @@ class HTMLFormat:  # pylint: disable=too-many-instance-attributes
 
         self.status = f"{self.method} {self.path} HTTP/1.1"
 
-    def fmt_body(self):
-        """format body for both response and request documents"""
+    def fmt_common(self):
+        """format items common to both response and request documents"""
 
         header_lower = {key.lower(): value for key, value in self.headers.items()}
         if self.content:

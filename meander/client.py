@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import logging
 
 from meander.parser import HTTPReader
-from meander.formatter import HTMLFormat
+from meander.formatter import HTTPFormat
 
 
 log = logging.getLogger(__name__)
@@ -35,13 +35,13 @@ class Client:
         bearer=None,
         close=False,
     ):
-        """write an HTTP document to the socket"""
+        """write an HTTP document to the writer"""
         if bearer:
             if not headers:
                 headers = {}
             headers["Authorization"] = f"Bearer {bearer}"
 
-        payload = HTMLFormat(
+        payload = HTTPFormat(
             is_response=False,
             method=method,
             path=path,

@@ -1,7 +1,7 @@
 """tests for http formatter"""
 import pytest
 
-from meander.formatter import HTMLFormat
+from meander.formatter import HTTPFormat
 
 
 @pytest.mark.parametrize(
@@ -17,7 +17,7 @@ from meander.formatter import HTMLFormat
 )
 def test_response_status(code, message, status):
     """test formatting of response status line"""
-    fmt = HTMLFormat(code=code, message=message)
+    fmt = HTTPFormat(code=code, message=message)
     assert fmt.status == status
 
 
@@ -47,21 +47,21 @@ def test_request_status(method, path, query, content, status):
         )
         if val is not None
     }
-    fmt = HTMLFormat(is_response=False, **kwargs)
+    fmt = HTTPFormat(is_response=False, **kwargs)
     assert fmt.status == status
 
 
 def test_request_status_query_and_content():
     """verify query and content produces error for request"""
     with pytest.raises(AttributeError) as err:
-        HTMLFormat(is_response=False, query="a=1", content={"b": 2})
+        HTTPFormat(is_response=False, query="a=1", content={"b": 2})
     assert err.value.args[0] == "query string and content both specified on GET"
 
 
 def test_request_status_non_dict_content():
     """verify non-dict content produces error for request"""
     with pytest.raises(AttributeError) as err:
-        HTMLFormat(is_response=False, content="bad")
+        HTTPFormat(is_response=False, content="bad")
     assert err.value.args[0] == "expecting dict content for GET"
 
 
@@ -76,7 +76,7 @@ def test_request_status_non_dict_content():
 )
 def test_derived_content_type(content, content_type, format_content):
     """test content-type guessing"""
-    fmt = HTMLFormat(content=content)
+    fmt = HTTPFormat(content=content)
     assert fmt.content_type == content_type + "; charset=utf-8"
     assert fmt.content == format_content
 
@@ -102,7 +102,7 @@ def test_derived_content_type(content, content_type, format_content):
 )
 def test_content_type_header(content, content_type, result):
     """test Content-Type"""
-    fmt = HTMLFormat(content=content, content_type=content_type)
+    fmt = HTTPFormat(content=content, content_type=content_type)
     if result is None:
         assert "Content-Type" not in fmt.headers
     else:

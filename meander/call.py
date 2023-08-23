@@ -10,7 +10,6 @@ log = logging.getLogger(__name__)
 
 async def call(  # pylint: disable=too-many-arguments, too-many-locals
     url,
-    method="GET",
     content="",
     headers=None,
     content_type=None,
@@ -20,6 +19,7 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     timeout=60,
     active_timeout=5,
     max_read_size=5000,
+    method="GET",
     verbose=False,
 ):
     """make client call and return response"""
@@ -48,7 +48,7 @@ def _method(name):
     """create request call bound to a method"""
 
     async def inner(url, *args, **kwargs):
-        return await call(url, name, *args, **kwargs)
+        return await call(url, *args, method=name, **kwargs)
 
     return inner
 

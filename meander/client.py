@@ -20,7 +20,8 @@ class Client:
         """open a connection to host/port"""
         # pylint: disable=attribute-defined-outside-init
         self.host = host
-        self.reader, self.writer = await asyncio.open_connection(host, port, ssl=is_ssl)
+        reader, self.writer = await asyncio.open_connection(host, port, ssl=is_ssl)
+        self.reader = HTTPReader(reader, is_server=False)
 
     def write(  # pylint: disable=too-many-arguments
         self,
@@ -61,15 +62,11 @@ class Client:
 
     async def read(self, timeout=60, active_timeout=5, max_read_size=5000):
         """read response from socket"""
-        http_reader = HTTPReader(
-            self.reader,
-            is_server=False,
-            timeout=timeout,
-            active_timeout=active_timeout,
-            max_read_size=max_read_size,
-        )
+        self.reader.timeout = timeout
+        self.reader.active_timeout = active_timeout
+        self.reader.max_read_size = max_read_size
 
-        result = await http_reader.read_document()
+        result = await self.reader.read_document()
 
         if self.verbose:
             log.debug("%s %s", result.http_status_code, result.http_status_message)

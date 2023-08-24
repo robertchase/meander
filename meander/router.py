@@ -79,6 +79,7 @@ class Router:  # pylint: disable=too-few-public-methods
         for url, val in routes.items():
             if base_url:
                 url = base_url.rstrip("/") + "/" + url.lstrip("/")
+            url = re.compile(url + "$")
 
             if not isinstance(val, dict):
                 val = {"GET": val}
@@ -112,7 +113,7 @@ class Router:  # pylint: disable=too-few-public-methods
     def __call__(self, resource, method):
         """try to match a resource/method to a defined route"""
         for key, val in self._routes.items():
-            if match := re.match(key + "$", resource):
+            if match := key.match(resource):
                 if path := val.get(method):
                     return Route(path.handler, match.groups(), path.silent, path.before)
         return None

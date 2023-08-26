@@ -18,6 +18,13 @@ lint:
 black:
 	$(BIN)/black meander tests
 
+.PHONY: bump
+bump:
+	$(eval TMP := $(shell mktemp tmp.setup.XXXXXX))
+	@awk '$$1=="version"{split($$3,n,".");$$0=sprintf("version = %d.%d.%d",n[1],n[2],n[3]+1)}{print}' setup.cfg > $(TMP)
+	@mv $(TMP) setup.cfg
+	@grep version setup.cfg
+
 .PHONY: certs
 certs:
 	# https://stackoverflow.com/questions/10175812/how-to-generate-a-self-signed-ssl-certificate-using-openssl/41366949#41366949

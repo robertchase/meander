@@ -53,7 +53,7 @@ This performs a ping from a locally defined function.
 
 ### using a non-local function as a handler
 
-If all of the functions that handle `meander` requests are local or imported, then the namespace of the module that makes the `add_server` call can get quite full. Another way to specify a handler function in the add_server call is to use the dot-delimited path to the function.
+If all of the functions that handle `meander` requests are local or imported, then the namespace of the module that makes the `add_server` call can get quite full. Another way to specify a handler function is to use the dot-delimited path to the function.
 
 When `meander` sees a string value for the handler that contains one or more "." characters, it dynamically loads the code when add_server is called.
 

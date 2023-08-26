@@ -22,7 +22,7 @@ In another terminal use `curl` to make the call:
 curl -v localhost:8080/ping
 ```
 
-Stop the server with `CNTL-c`.
+Stop the server with `CTRL-c`.
 
 ### enabling logging
 
@@ -108,7 +108,7 @@ curl localhost:8080/add\?a=10\&b=20
 1020
 ```
 
-We can see from the result, `1020`, that the two parameters were treated as strings and concatenated. If the purpose is to add `10` and `20`, then it makes sense to force the parameters to integer values. When the `int` annotation is added to the function signature, then `meander` will automatically do the conversion.
+We can see from the result, `1020`, that the two parameters were treated as strings and concatenated. If the purpose is to add the *numbers* `10` and `20`, then it makes sense to force the parameters to integer values. When the `int` annotation is added to the function signature, then `meander` will automatically do the conversion.
 
 [add numbers](add-numbers.py)
 
@@ -171,4 +171,4 @@ Using *before* allows for the separation of `HTTP` processing from the handler's
 
 [before](before.py)
 
-This provides two `GET` endpoints, `/value` and `/value/required` that are looking for an `HTTP` header named `x-value` which gets added to `request.context` with the key `value`. If the `header` is not present, `/value` will use `default-value` and `/value/required` will return a `400 Bad Request`.
+This provides two `GET` endpoints, `/value` and `/value/required` that are looking for an `HTTP` header named `x-value` which gets added to `request.content` with the key `value`. If the `header` is not present, `/value` will use `default-value` and `/value/required` will return a `400 Bad Request`.

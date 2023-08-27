@@ -172,3 +172,42 @@ Using *before* allows for the separation of `HTTP` processing from the handler's
 [before](before.py)
 
 This provides two `GET` endpoints, `/value` and `/value/required` that are looking for an `HTTP` header named `x-value` which gets added to `request.content` with the key `value`. If the `header` is not present, `/value` will use `default-value` and `/value/required` will return a `400 Bad Request`.
+
+### running multiple servers
+
+The `add_server` function can be called multiple times before calling `meander.run`. Each server listens asynchronously on a different port.
+
+[multi-ping](multi-ping.py)
+
+This example defines two servers. One server calls the other in order to answer a `ping`. Each server has a `name` defined so that log messages are clear, and the "secondary" server specifies a non-default port.
+
+Call the "main" server with
+
+```
+curl localhost:8080/ping
+```
+
+The `meander` log looks something like this:
+
+```
+DEBUG:asyncio:Using selector: KqueueSelector
+INFO:meander:starting server main on port 8080
+INFO:meander:starting server secondary on port 12345
+
+[1] INFO:meander:open server=main socket=127.0.0.1:58235 cid=1
+[2] DEBUG:meander.client:b'GET /ping HTTP/1.1\r\nHOST: localhost\r\nDate: Sun, 27 Aug 2023 06:18:15 EDT\r\nContent-Length: 0\r\nConnection: close\r\n\r\n'
+[3] INFO:meander:open server=secondary socket=::1:58236 cid=2
+INFO:meander:request cid=2 rid=2 method=GET resource=/ping status=200 t=0.000139
+[4] INFO:meander:close cid=2 t=0.000363
+DEBUG:meander.client:200 OK
+DEBUG:meander.client:{'content-type': 'text/plain; charset=utf-8', 'date': 'Sun, 27 Aug 2023 06:18:15 EDT', 'content-length': '4'}
+[5] DEBUG:meander.client:b'pong'
+INFO:meander:request cid=1 rid=1 method=GET resource=/ping status=200 t=0.003765
+[6] INFO:meander:close cid=1 t=0.004772
+```
+
+The `curl` command connects to the "main" server [1] which is listening on port 8080. The `pingping` function makes a `call` [2] to port 12345 which connects to the "secondary" server [3] as cid=2. This connection responds with a "pong" [5] and closes [4]. The inital connection to "main", cid=1, responds with the "pong" and closes [6].
+
+##### why would you do this?
+
+One use case for multiple ports is to isolate `internal` and `external` access to the server. If all service-to-service endpoints are defined on an `internal` port, and all public-internet endpoints are defined on a `public` port, then traffic routing at the infrastructure layer is simplified&mdash;if internet traffic can't reach the `internal` port, then none of the "private" endpoints are available for compromise.

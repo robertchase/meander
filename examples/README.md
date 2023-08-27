@@ -210,4 +210,4 @@ The `curl` command connects to the "main" server [1] which is listening on port 
 
 ##### why would you do this?
 
-One use case for multiple ports is to isolate `internal` and `external` access to the server. If all service-to-service endpoints are defined on an `internal` port, and all public-internet endpoints are defined on a `public` port, then traffic routing at the infrastructure layer is simplified&mdash;if internet traffic can't reach the `internal` port, then none of the "private" endpoints are available for compromise.
+One use case for multiple ports is to isolate `internal` and `external` access to the server. If all service-to-service endpoints are defined on an `internal` port, and all public endpoints are defined on a `external` (public-facing) port, then traffic routing at the infrastructure layer is simplified&mdash;if internet traffic can't reach the `internal` port, then none of the "private" endpoints are exposed to potentially bad actors on the outside.

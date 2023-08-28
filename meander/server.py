@@ -16,9 +16,8 @@ log = logging.getLogger(__package__)
 class Server(Runnable):
     """container for server attributes
 
-    performs asyncio.start_server right before event loop start
-
-    gets __call__'ed on each connection
+    at meander.run, start is called
+    at connection to port, __call__ is called (via asyncio.start_server)
     """
 
     name: str
@@ -36,6 +35,7 @@ class Server(Runnable):
         self.router = Router(self.routes, self.base_url)
 
     async def start(self):
+        """setup and start server listening on port"""
         if self.name:
             log.info("starting server %s on port %d", self.name, self.port)
         else:
@@ -51,7 +51,8 @@ class Server(Runnable):
         ).serve_forever()
 
     async def __call__(self, reader, writer):
-        connection = Connection(reader, writer, self.name, self.router)
+        """called for each new connection to the port"""
+        connection = Connection(reader, writer, self.router, self.name)
         await connection.handle()
 
 

@@ -18,22 +18,20 @@ connection_sequence = count(1)
 request_sequence = count(1)
 
 
-class Connection:  # pylint: disable=too-many-instance-attributes
+class Connection:
     """handle requests arriving on an HTTP connection"""
 
-    def __init__(self, reader, writer, name, router):
+    def __init__(self, reader, writer, router, name=None):
         self.cid = next(connection_sequence)
         self.reader = HTTPReader(reader)
         self.writer = writer
+        self.router = router
 
         self.silent = False
         self.message = None
 
-        self.name = name
-        self.router = router
-
         peerhost, peerport = self.writer.get_extra_info("peername")[:2]
-        self.open_msg = f"open server={self.name} " if self.name else ""
+        self.open_msg = f"open server={name} " if name else ""
         self.open_msg += f"socket={peerhost}:{peerport}" f" cid={self.cid}"
 
     async def handle(self):

@@ -51,16 +51,15 @@ class Connection:
             except ConnectionResetError:
                 pass
 
-    async def next_request(self):
-        """handle the next request arriving on the connection"""
+    async def next_request(self) -> bool:
+        """get and handle the next request arriving on the connection"""
         self.message = None
-        keep_alive = False
         reason_code = 200
         r_start = time.perf_counter()
         try:
             if request := await parse(self.reader):
                 r_start = time.perf_counter()
-                keep_alive = await self.handle_request(request)
+                return await self.handle_request(request)
         except (
             exception.DuplicateAttributeError,
             exception.ExtraAttributeError,
@@ -71,7 +70,6 @@ class Connection:
             result = Response(str(err), 400, "Bad Request")
             self.writer.write(result.serial())
         except asyncio.exceptions.TimeoutError:
-            keep_alive = False
             log.info("timeout cid=%s", self.cid)
         except exception.HTTPException as exc:
             reason_code = exc.code
@@ -92,9 +90,7 @@ class Connection:
                     )
                     log.info(self.message)
 
-        return keep_alive
-
-    async def handle_request(self, request):
+    async def handle_request(self, request) -> bool:
         """handle a single request"""
         rid = next(request_sequence)
         self.message = (
@@ -109,8 +105,6 @@ class Connection:
                     log.info(self.open_msg)
                 self.open_msg = None
             request.args = route.args
-            request.connection_id = self.cid
-            request.id = rid
 
             for before in route.before:
                 result = before(request)

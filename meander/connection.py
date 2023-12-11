@@ -93,6 +93,8 @@ class Connection:
     async def handle_request(self, request) -> bool:
         """handle a single request"""
         rid = next(request_sequence)
+        request.id = rid
+        request.connection_id = self.cid
         self.message = (
             f"request cid={self.cid}"
             f" rid={rid} method={request.http_method}"

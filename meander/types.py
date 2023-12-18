@@ -5,10 +5,6 @@ import re
 ConnectionId = type("CONNECTIONID", (), {})
 
 
-class ParamType:  # pylint: disable=too-few-public-methods
-    """base class for user-defined types"""
-
-
 def boolean(value):
     """boolean type that accepts 1, "1", True, 0, "0", False"""
     if isinstance(value, str) and value.lower() == "true":
@@ -29,7 +25,7 @@ def integer(value):
     return int(value)
 
 
-class String(ParamType):  # pylint: disable=too-few-public-methods
+class String:  # pylint: disable=too-few-public-methods
     """string type with min and max length settings"""
 
     def __init__(self, min_length=0, max_length=None):

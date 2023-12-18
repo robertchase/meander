@@ -38,13 +38,7 @@ def get_params(func):
                 return types.integer
             if par.annotation == bool:
                 return types.boolean
-            if par.annotation == str:
-                return str
-            if isinstance(par.annotation, type) and issubclass(
-                par.annotation, types.ParamType
-            ):
-                return par.annotation()
-            if isinstance(par.annotation, types.ParamType):
+            if callable(par.annotation):
                 return par.annotation
         return lambda x: x
 

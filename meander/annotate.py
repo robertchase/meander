@@ -82,7 +82,8 @@ def call(func, request: Request):
         args.append(request)
     else:
         if not isinstance(content, dict):
-            raise exception.PayloadValueError("expecting content to be a dictionary")
+            raise exception.PayloadValueError(
+                "content", "expecting content to be a dictionary")
         connection_id = f"con={request.connection_id} req={request.id}"
 
         if len(request.args) > len(params):

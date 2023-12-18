@@ -118,7 +118,7 @@ def call(func, request: Request):
                 try:
                     value = param.type(content[param.name])
                     update_arguments(param, value)
-                except ValueError as err:
-                    raise exception.PayloadValueError(f"'{param.name}' is {err}")
+                except (AttributeError, ValueError) as err:
+                    raise exception.PayloadValueError(param.name, err)
 
     return func(*args, **kwargs)  # will return coroutine if async

@@ -32,6 +32,9 @@ class DuplicateAttributeError(AttributeError):
 class PayloadValueError(ValueError):
     """invalid value in payload"""
 
+    def __init__(self, name, err):
+        self.args = (f"invalid {name} value: {err}",)
+
 
 class RequiredAttributeError(AttributeError):
     """missing attribute in http payload"""

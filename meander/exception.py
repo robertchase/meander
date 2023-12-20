@@ -11,6 +11,13 @@ class HTTPException(Exception):
         self.explanation = explanation
 
 
+class HTTPBadRequest(HTTPException):
+    """helper class for '400 Bad Request exception"""
+
+    def __init__(self, explanation=""):
+        super().__init__(400, "Bad Request", explanation)
+
+
 class HTTPEOF(Exception):
     """end of stream before full document is read"""
 

@@ -1,7 +1,7 @@
 """top level imports"""
 from .call import call
 from .document import ServerDocument as Request
-from .exception import HTTPException
+from .exception import HTTPException, HTTPBadRequest
 from .response import Response, HTMLResponse, HTMLRefreshResponse
 from .runner import run
 from .server import add_server

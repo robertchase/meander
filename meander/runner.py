@@ -28,6 +28,8 @@ def run():
     """start all defined runnables in an event loop"""
 
     async def _run():
-        await asyncio.gather(*[await runnable.start() for runnable in runnables])
+        async with asyncio.TaskGroup() as tasks:
+            for runnable in runnables:
+                tasks.create_task(await runnable.start())
 
     asyncio.run(_run())

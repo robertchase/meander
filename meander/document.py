@@ -8,7 +8,6 @@ class Document:  # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.http_headers = {}
         self.http_content_length = None
-        self.http_content_type = None
         self.http_charset = None
         self.http_encoding = None
         self.http_content_type = None

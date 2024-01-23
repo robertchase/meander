@@ -1,11 +1,8 @@
 # Request
 
-A `Request` (`meander.document.ServerDocument`) is a container for a single `HTTP` document that arrives on an inbound `meander` connection.
+A `meander.Request` (`meander.document.ServerDocument`) is a container for a single `HTTP` document that arrives on an inbound `meander` connection.
 
-A `Request` is passed as the only parameter to a `before` callable.
-
-If a handler function has a parameter with a `web.Request` annotation, then the `Request` object will be explicitly passed in this parameter. There is no *secret* or *magic* way to access the `Request`. *Note that using a `Request` in a handler function makes that function dependent on `HTTP` (or an equivalent proxy/mock)&mdash;this
-goes against the grain of `meander` design principles*.
+If a handler function has a parameter with a `meander.Request` annotation, then the `Request` object will be explicitly passed in this parameter. There is no *secret* or *magic* way to access the `Request`. *Note that using a `Request` in a handler function makes that function dependent on `HTTP` (or an equivalent proxy/mock)&mdash;this goes against the grain of `meander` design principles. See "best practices" below*.
 
 ```
 class ServerDocument:
@@ -21,10 +18,10 @@ class ServerDocument:
     http_charset: str
     http_encoding: str
     http_content_type: str
-    http_content: str
+    http_content: bytes
     
     args: tuple
-    content: None | dict
+    content: None | dict | str | bytes
     is_keep_alive: bool    
 ```
 
@@ -57,11 +54,11 @@ These values are derived from the `HTTP` request's headers:
 
 ### http\_content
 
-`http_content` is a str containing the body of the inbound `HTTP` request.
+`http_content` is a byte string containing the body of the inbound `HTTP` request.
 
 ### args
 
-If any regex groups are defined in the *pattern* used in the *routes* dict of the `add_server` function, those groups will be added as a args in the `Request` that matches the route. For instance, the route:
+If any regex groups are defined in the *pattern* used in the *routes* argument to the `add_server` function, those groups will be added as the `args` attribute to the `Request` that matches the route. For instance, the route:
 
 ```
 "/foo/([a-z]*)/(\d*)"
@@ -78,10 +75,18 @@ will match any `HTTP` resource that starts with "/foo/", followed by one or more
 * the `http_query` value of a `GET` call
 * the `json.loads` of the `http_content` of a `POST`, `PUT`, or `PATCH` call having `application/json` `http_content_type`
 * a `dict` conversion of the `http_content` of a `POST`, `PUT`, or `PATCH` call having `application/x-www-form-urlencoded` `http_content_type`
-* the decoded value of the `http_content` of a `POST`, `PUT` or `PATCH` call having `text/plain` `http_content_type`
+* the decoded string value of the `http_content` of a `POST`, `PUT` or `PATCH` call having `text/plain` `http_content_type`
 * the `http_content` of a `POST`, `PUT` or `PATCH` call not matching any of the above
 * otherwise `None`
 
 ### is\_keep\_alive
 
 `is_keep_alive` is a `bool` set to `True` if the `connection` header has the value "keep-alive".
+
+## best practices
+
+`meander` allows you connect "normal" python functions to the web. If a function expects a `Request` as a parameter, then it is no longer "normal", but is, instead, tied to to the web. This defeats a primary purpose of `meander`, namely, the separation of `HTTP` details and handler functions.
+
+In order to avoid mixing your handler functions with `HTTP`, use one or more `before` functions when setting up the `routes` in `add_server`. Each `before` function is passed the `Request` object where web-specific logic can be executed *before the handler function is called*. Headers values can be checked, special payload handling can be performed, `args` and `content` can be manipulated&mdash;anything that would normally be processed in an `HTTP` handler can be performed in a `before` function, thereby, isolating the handler function from any awareness of `HTTP`. Think of a `before` function as a decorator that only gets run if the function is called with `meander`.
+
+The simplest way to design a handler function is to provide it with a single, unannotated argument. `meander` will pass `Request.content` to this parameter. With this in mind, the `before` functions can alter or augment the `content` attribute using data available in other parts of the `Request` so that the handler function remains unaware of `HTTP`.

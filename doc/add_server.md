@@ -45,8 +45,7 @@ where:
 
 * `silent` is a flag that controls log messages produced by meander for each connection (default=False)
 * `before` is a list of callables to execute prior to calling the
-handler; each callable is invoked in order with
-the http_document (web.Request) as the only argument
+handler; each callable is invoked in order with a `meander.Request` as the only argument
 	
 If a pattern has only a `GET` method handler, then the dict of methods and handlers can be replaced with just a `HANDLER`.
 

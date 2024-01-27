@@ -6,14 +6,14 @@ import ssl
 
 from meander.connection import Connection
 from meander.router import Router
-from meander.runner import Runnable, add_runnable
+from meander.runner import add_task
 
 
 log = logging.getLogger(__package__)
 
 
 @dataclass
-class Server(Runnable):
+class Server:
     """container for server attributes
 
     at meander.run, start is called
@@ -46,7 +46,7 @@ class Server(Runnable):
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             context.load_cert_chain(self.ssl_certfile, self.ssl_keyfile)
 
-        return (
+        return await (
             await asyncio.start_server(self, port=self.port, ssl=context)
         ).serve_forever()
 
@@ -66,5 +66,5 @@ def add_server(  # pylint: disable=too-many-arguments
 ) -> Server:
     """define and add a new server for meander to run"""
     server = Server(name, routes, port, base_url, ssl_certfile, ssl_keyfile)
-    add_runnable(server)
+    add_task(server.start)
     return server

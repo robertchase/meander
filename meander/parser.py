@@ -283,10 +283,11 @@ async def parse_chunked(reader, document):
 def parse_content(document):
     """extract content based on http_content_type"""
     if document.http_content_type == "application/json":
-        try:
-            document.content = json.loads(document.http_content)
-        except json.decoder.JSONDecodeError as exc:
-            raise HTTPException(400, "Bad Request", "invalid json content") from exc
+        if document.http_content:
+            try:
+                document.content = json.loads(document.http_content)
+            except json.decoder.JSONDecodeError as exc:
+                raise HTTPException(400, "Bad Request", "invalid json content") from exc
     elif document.http_content_type == "application/x-www-form-urlencoded":
         if document.http_content:
             query = urlparse.parse_qs(

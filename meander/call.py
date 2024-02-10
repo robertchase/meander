@@ -27,7 +27,7 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     parsed_url = _URL(url)
     client = Client(verbose=verbose)
     await client.open(parsed_url.host, parsed_url.port, is_ssl=parsed_url.is_ssl)
-    client.write(
+    payload = client.write(
         method=method,
         path=parsed_url.path,
         query_string=parsed_url.query,
@@ -40,6 +40,7 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
         close=True,
     )
     result = await client.read(timeout, active_timeout, max_read_size)
+    result.request = payload
     await client.close()
     return result
 

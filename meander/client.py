@@ -60,6 +60,8 @@ class Client:
         if self.verbose:
             log.debug(payload.serial())
 
+        return payload
+
     async def read(self, timeout=60, active_timeout=5, max_read_size=5000):
         """read response from socket"""
         self.reader.timeout = timeout

@@ -82,12 +82,12 @@ class HTTPReader:  # pylint: disable=too-many-instance-attributes
                 if line.endswith(b"\r"):
                     line = line[:-1]
                 if len(line) > self.max_line_length:
-                    raise HTTPException(431, "Request Header Fields Too Long")
+                    raise HTTPException(431, "Request Header Fields Too Large")
                 return line.decode("ascii")
 
             if len(self.buffer) > self.max_line_length:
                 raise HTTPException(
-                    431, "Request Header Fields Too Long", "no end of line encountered"
+                    431, "Request Header Fields Too Large", "no end of line encountered"
                 )
             await self.read_block()
 

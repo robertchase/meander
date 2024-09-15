@@ -1,6 +1,6 @@
 """call a function with parameter values from a web.Request"""
 from dataclasses import dataclass
-from inspect import signature
+import inspect
 
 from meander import exception
 from meander.document import ServerDocument as Request
@@ -44,7 +44,7 @@ def get_params(func):
 
     params = []
 
-    sig = signature(func)
+    sig = inspect.signature(func)
     for par in sig.parameters.values():
         param_type = get_type()
 
@@ -97,6 +97,7 @@ def call(func, request: Request):
             content[param.name] = value
 
         if True in [param.is_extra_kwarg for param in params]:
+            # scoop up extra (unmatched) k/v content into **kwargs
             param_names = [param.name for param in params]
             for key, val in content:
                 if key not in param_names:

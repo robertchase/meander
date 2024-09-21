@@ -3,7 +3,7 @@ import asyncio
 
 from meander import Request
 from meander.connection import Connection
-from meander.router import Route
+from meander.router import Endpoint
 
 
 class ByteWriter:
@@ -30,7 +30,7 @@ class EasyRouter:  # pylint: disable=too-few-public-methods
         self.before = [] if not before else before
 
     def __call__(self, *args):
-        return Route(self.handler, self.args, False, self.before)
+        return Endpoint(self.handler, self.args, False, self.before)
 
 
 def test_text():

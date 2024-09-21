@@ -1,4 +1,5 @@
 """parser for http documents"""
+
 import asyncio
 import gzip
 import json

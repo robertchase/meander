@@ -1,4 +1,5 @@
 """one-shot http client"""
+
 import logging
 from urllib.parse import urlparse
 

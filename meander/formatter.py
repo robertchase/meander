@@ -1,4 +1,5 @@
 """formatters for HTTP documents"""
+
 from dataclasses import dataclass
 import gzip
 import json

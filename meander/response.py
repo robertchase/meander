@@ -1,4 +1,5 @@
 """formatters for HTTP responses"""
+
 from dataclasses import dataclass
 
 from meander.formatter import HTTPFormat as Response

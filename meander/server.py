@@ -1,11 +1,12 @@
 """manage meander servers"""
+
 import asyncio
 from dataclasses import dataclass
 import logging
 import ssl
 
 from meander.connection import Connection
-from meander.router import Router
+from meander import router
 from meander.runner import add_task
 
 
@@ -21,7 +22,7 @@ class Server:
     """
 
     name: str
-    routes: dict
+    routes: dict | str
     port: int
     base_url: str = None
     ssl_certfile: str = None
@@ -32,7 +33,11 @@ class Server:
             raise AttributeError("ssl_keyfile not specified")
         if self.ssl_keyfile and not self.ssl_certfile:
             raise AttributeError("ssl_certfile not specified")
-        self.router = Router(self.routes, self.base_url)
+
+        if isinstance(self.routes, dict):
+            self.router = router.from_dict(self.routes, self.base_url)
+        elif isinstance(self.routes, str):
+            self.router = router.from_config(self.routes, self.base_url)
 
     async def start(self):
         """setup and start server listening on port"""

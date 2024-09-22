@@ -97,12 +97,20 @@ def call(func, request: Request):
                 raise exception.DuplicateAttributeError(param.name)
             content[param.name] = value
 
-        if True in [param.is_extra_kwarg for param in params]:
-            # scoop up extra (unmatched) k/v content into **kwargs
-            param_names = [param.name for param in params]
-            for key, val in content:
+        param_names = [param.name for param in params]
+        if extra := [param for param in params if param.is_extra_kwarg]:
+            # scoop up extra (unmatched) k/v content into kwargs
+            (extra,) = extra
+            if extra.name in content:
+                raise exception.ExtraAttributeError([extra.name])
+            for key in content.keys():
                 if key not in param_names:
-                    kwargs[key] = val
+                    kwargs[key] = content[key]
+        else:
+            # no ** parameter: check for extra content
+            for key in content.keys():
+                if key not in param_names:
+                    raise exception.ExtraAttributeError([key])
 
         def update_arguments(param, value):
             if param.is_required:
@@ -115,6 +123,8 @@ def call(func, request: Request):
                 update_arguments(param, connection_id)
             elif param.is_request:
                 update_arguments(param, request)
+            elif param.is_extra_kwarg:
+                pass
             elif param.name not in content:
                 if param.is_required:
                     raise exception.RequiredAttributeError(param.name)

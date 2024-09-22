@@ -1,4 +1,5 @@
 """test annotation inspection"""
+
 import pytest
 
 from meander import annotate, types, Request, exception
@@ -118,22 +119,26 @@ def call_content(abc):
     return abc
 
 
-def call_int(test1: int, test2: int, test4: int):
+# pylint: disable-next=unused-argument
+def call_int(test1: int, test2: int, test4: int, **kwargs):
     """expect ints"""
     return {"a": test1, "b": test2, "c": test4}
 
 
-def call_str(test1: str, test2: str, test5: str):
+# pylint: disable-next=unused-argument
+def call_str(test1: str, test2: str, test5: str, **kwargs):
     """expect strings"""
     return {"a": test1, "b": test2, "c": test5}
 
 
-def call_bool(test4: bool, test5: bool):
+# pylint: disable-next=unused-argument
+def call_bool(test4: bool, test5: bool, **kwargs):
     """expect booleans"""
     return {"a": test4, "b": test5}
 
 
-def call_various(test1: int, test2: str, test4: bool, test10: int = 123):
+# pylint: disable-next=unused-argument
+def call_various(test1: int, test2: str, test4: bool, test10: int = 123, **kwargs):
     """expect a combination of things"""
     return {"a": test1, "b": test2, "c": test4, "d": test10}
 
@@ -161,3 +166,33 @@ def test_non_json_call():
     non_json_request.args = []
     with pytest.raises(exception.PayloadValueError):
         annotate.call(call_int, non_json_request)
+
+
+def call_one(test1: int):  # pylint: disable=unused-argument
+    """Single argument."""
+
+
+def test_extra_parameter():
+    """Send undefined parameter and expect error."""
+    request.content = {"test1": 1, "test2": 2}
+    with pytest.raises(exception.ExtraAttributeError):
+        annotate.call(call_one, request)
+
+
+def call_with_kwargs(test: int, **test_kwargs):  # pylint: disable=unused-argument
+    """Test ** argument."""
+    return test_kwargs
+
+
+def test_extra_parameter_with_kwargs():
+    """Send undefined parameter and expect success."""
+    request.content = {"test": 1, "a": 10, "b": 12}
+    result = annotate.call(call_with_kwargs, request)
+    assert result == {"a": 10, "b": 12}
+
+
+def test_conflict_with_kwargs():
+    """Send parameter name that conflicts with **kwarg name."""
+    request.content = {"test": 1, "test_kwargs": 10}
+    with pytest.raises(exception.ExtraAttributeError):
+        annotate.call(call_with_kwargs, request)

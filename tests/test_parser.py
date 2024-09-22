@@ -1,4 +1,5 @@
 """tests for http parser"""
+
 import asyncio
 import gzip
 import json

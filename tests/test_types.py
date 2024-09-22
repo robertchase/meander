@@ -1,4 +1,5 @@
 """tests for types"""
+
 import pytest
 
 from meander import types

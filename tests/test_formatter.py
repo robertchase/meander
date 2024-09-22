@@ -1,4 +1,5 @@
 """tests for http formatter"""
+
 import pytest
 
 from meander.formatter import HTTPFormat

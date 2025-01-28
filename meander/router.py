@@ -209,7 +209,10 @@ def from_config(config_path: str, base_url: str = "") -> Router:
                 raise RouteNotDefinedError(line_no, directive)
 
             elif directive == "METHOD":
-                no_duplicates("method")
+                if "method" in route:
+                    add_route()
+                    route = {key: val for key, val in route.items()
+                             if key in ("resource", "base_url")}
                 route["method"] = one_parameter().upper()
 
             elif directive == "HANDLER":

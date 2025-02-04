@@ -2,7 +2,7 @@
 
 import pytest
 
-from meander import annotate, types, Request, exception
+from meander import annotate, types_, Request, exception
 
 
 def func1():
@@ -47,7 +47,7 @@ def test_get_params_multiple():
     assert not param.is_connection_id
     assert param.is_required
     assert not param.is_extra_kwarg
-    assert param.type == types.integer  # pylint: disable=comparison-with-callable
+    assert param.type == types_.integer
 
     param = params[1]
     assert not param.no_annotation
@@ -55,7 +55,7 @@ def test_get_params_multiple():
     assert not param.is_connection_id
     assert param.is_required
     assert not param.is_extra_kwarg
-    assert param.type == str
+    assert param.type is str
 
     param = params[2]
     assert not param.no_annotation
@@ -63,7 +63,7 @@ def test_get_params_multiple():
     assert not param.is_connection_id
     assert not param.is_required
     assert not param.is_extra_kwarg
-    assert param.type == types.boolean
+    assert param.type == types_.boolean
 
     param = params[3]
     assert param.no_annotation
@@ -74,7 +74,7 @@ def test_get_params_multiple():
 
 
 # pylint: disable-next=unused-argument
-def func4(test1: types.ConnectionId, test2: Request):
+def func4(test1: types_.ConnectionId, test2: Request):
     """special parameters"""
 
 

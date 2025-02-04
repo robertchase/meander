@@ -33,7 +33,7 @@ class Connection:
 
         peerhost, peerport = self.writer.get_extra_info("peername")[:2]
         self.open_msg = f"open server={name} " if name else ""
-        self.open_msg += f"socket={peerhost}:{peerport}" f" cid={self.cid}"
+        self.open_msg += f"socket={peerhost}:{peerport} cid={self.cid}"
 
     async def handle(self):
         """handle new connection"""
@@ -87,7 +87,7 @@ class Connection:
                     log.info(self.open_msg)
                 if self.message:
                     self.message += (
-                        f" status={reason_code}" f" t={time.perf_counter() - r_start:f}"
+                        f" status={reason_code} t={time.perf_counter() - r_start:f}"
                     )
                     log.info(self.message)
 

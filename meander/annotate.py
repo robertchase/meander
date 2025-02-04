@@ -5,7 +5,7 @@ import inspect
 
 from meander import exception
 from meander.document import ServerDocument as Request
-from meander import types
+from meander import types_
 
 
 CACHE = {}  # save the results of get_params
@@ -33,12 +33,12 @@ def get_params(func):
     def get_type():
         # pylint: disable=too-many-return-statements
         if par.annotation != par.empty:
-            if par.annotation in (Request, types.ConnectionId):
+            if par.annotation in (Request, types_.ConnectionId):
                 return par.annotation
-            if par.annotation == int:
-                return types.integer
-            if par.annotation == bool:
-                return types.boolean
+            if par.annotation is int:
+                return types_.integer
+            if par.annotation is bool:
+                return types_.boolean
             if callable(par.annotation):
                 return par.annotation
         return lambda x: x
@@ -55,7 +55,7 @@ def get_params(func):
                 par.name,
                 par.annotation == par.empty,
                 param_type == Request,
-                param_type == types.ConnectionId,
+                param_type == types_.ConnectionId,
                 par.default == par.empty,
                 par.kind == par.VAR_KEYWORD,
             )
@@ -92,7 +92,7 @@ def call(func, request: Request):
             valid = len(params)
             raise exception.ExtraAttributeError(args[valid:])
 
-        for value, param in zip(request.args, params):
+        for value, param in zip(request.args, params, strict=False):
             if param.name in content:
                 raise exception.DuplicateAttributeError(param.name)
             content[param.name] = value
@@ -133,6 +133,6 @@ def call(func, request: Request):
                     value = param.type(content[param.name])
                     update_arguments(param, value)
                 except (AttributeError, ValueError) as err:
-                    raise exception.PayloadValueError(param.name, err)
+                    raise exception.PayloadValueError(param.name, err) from None
 
     return func(*args, **kwargs)  # will return coroutine if async

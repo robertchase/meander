@@ -2,7 +2,7 @@
 
 import pytest
 
-from meander import types
+from meander import types_
 
 
 @pytest.mark.parametrize(
@@ -24,10 +24,10 @@ from meander import types
 def test_boolean(value, is_valid, result):
     """test boolean operation"""
     if is_valid:
-        assert types.boolean(value) == result
+        assert types_.boolean(value) == result
     else:
         with pytest.raises(ValueError):
-            types.boolean(value)
+            types_.boolean(value)
 
 
 @pytest.mark.parametrize(
@@ -45,20 +45,20 @@ def test_boolean(value, is_valid, result):
 def test_integer(value, is_valid, result):
     """test integer operation"""
     if is_valid:
-        assert types.integer(value) == result
+        assert types_.integer(value) == result
     else:
         with pytest.raises(ValueError):
-            types.integer(value)
+            types_.integer(value)
 
 
 def test_string_ctor():
     """test String construction"""
 
     with pytest.raises(AttributeError):
-        types.String(min_length=-1)
+        types_.String(min_length=-1)
 
     with pytest.raises(AttributeError):
-        types.String(min_length=5, max_length=3)
+        types_.String(min_length=5, max_length=3)
 
 
 @pytest.mark.parametrize(
@@ -76,7 +76,7 @@ def test_string_ctor():
 )
 def test_string(min_length, max_length, value, is_valid, result):
     """test String operation"""
-    validator = types.String(min_length, max_length)
+    validator = types_.String(min_length, max_length)
     if is_valid:
         assert validator(value) == result
     else:

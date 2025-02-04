@@ -1,5 +1,6 @@
+NAME := $(shell basename $(PWD))
 PYTHONPATH := $(PWD):.
-VENV := $(PWD)/.env
+VENV := $(PWD)/.venv
 
 PATH := $(VENV)/bin:$(PATH)
 BIN := PATH=$(PATH) PYTHONPATH=$(PYTHONPATH) $(VENV)/bin
@@ -12,18 +13,18 @@ test:
 
 .PHONY: lint
 lint:
-	$(BIN)/pylint meander tests
+	$(BIN)/ruff check $(NAME) tests
 
 .PHONY: black
 black:
-	$(BIN)/black meander tests
+	$(BIN)/black $(NAME) tests
 
 .PHONY: bump
 bump:
-	$(eval TMP := $(shell mktemp tmp.setup.XXXXXX))
-	@awk '$$1=="version"{split($$3,n,".");$$0=sprintf("version = %d.%d.%d",n[1],n[2],n[3]+1)}{print}' setup.cfg > $(TMP)
-	@mv $(TMP) setup.cfg
-	@grep version setup.cfg
+	$(eval TMP := $(shell mktemp tmp.pyproject.XXXXXX))
+	@awk '$$1=="version"{gsub("\"","",$$3);split($$3,n,".");$$3=sprintf("\"%d.%d.%d\"",n[1],n[2],n[3]+1)}{print}' pyproject.toml > $(TMP)
+	@mv $(TMP) pyproject.toml
+	@grep ^version\ = pyproject.toml
 
 .PHONY: certs
 certs:
@@ -40,4 +41,4 @@ bin:
 venv:
 	python3 -m venv $(VENV)
 	$(pip) install --upgrade pip
-	$(pip) install -r requirements.txt
+	$(pip) install -r requirements.dev

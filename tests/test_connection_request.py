@@ -45,7 +45,7 @@ def test_text():
 
     async def test():
         await con.handle_request(Request())
-        assert writer.out.endswith("\r\nabc".encode())
+        assert writer.out.endswith(bytes("\r\nabc", "utf-8"))
 
     asyncio.run(test())
 
@@ -61,7 +61,7 @@ def test_text_coro():
 
     async def test():
         await con.handle_request(Request())
-        assert writer.out.endswith("\r\nabc".encode())
+        assert writer.out.endswith(bytes("\r\nabc", "utf-8"))
 
     asyncio.run(test())
 
@@ -77,7 +77,7 @@ def test_none():
 
     async def test():
         await con.handle_request(Request())
-        assert writer.out.endswith("\r\nContent-Length: 0\r\n\r\n".encode())
+        assert writer.out.endswith(bytes("\r\nContent-Length: 0\r\n\r\n", "utf-8"))
 
     asyncio.run(test())
 
@@ -118,6 +118,6 @@ def test_before():
 
     async def test():
         await con.handle_request(Request())
-        assert writer.out.endswith('\r\n{"a": 1, "b": 2}'.encode())
+        assert writer.out.endswith(bytes('\r\n{"a": 1, "b": 2}', "utf-8"))
 
     asyncio.run(test())

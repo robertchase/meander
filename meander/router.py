@@ -191,9 +191,16 @@ def from_config(config_path: str, base_url: str = "") -> Router:
         if key in route:
             raise DuplicateDirectiveError(line_no, directive)
 
+    def add_method(method):
+        """Add method to route if not already present."""
+        if method in methods:
+            raise DuplicateDirectiveError(line_no, method)
+        methods.add(method)
+        route["method"] = method
+
     routes = []
     route = {}
-    with open(dot_delimited_to_path(config_path), "r", encoding="utf-8") as config:
+    with open(dot_delimited_to_path(config_path), encoding="utf-8") as config:
         for line_no, line in enumerate(config.readlines(), start=1):
 
             directive, args = parse_line(line)
@@ -204,6 +211,7 @@ def from_config(config_path: str, base_url: str = "") -> Router:
             elif directive == "ROUTE":
                 add_route()
                 route = {"resource": one_parameter(), "base_url": base_url}
+                methods = set()
 
             elif not route:
                 raise RouteNotDefinedError(line_no, directive)
@@ -211,12 +219,17 @@ def from_config(config_path: str, base_url: str = "") -> Router:
             elif directive == "METHOD":
                 if "method" in route:
                     add_route()
-                    route = {key: val for key, val in route.items()
-                             if key in ("resource", "base_url")}
-                route["method"] = one_parameter().upper()
+                    route = {
+                        key: val
+                        for key, val in route.items()
+                        if key in ("resource", "base_url")
+                    }
+                add_method(one_parameter().upper())
 
             elif directive == "HANDLER":
                 no_duplicates("handler")
+                if "method" not in route:
+                    add_method("GET")
                 route["handler"] = one_parameter()
 
             elif directive == "BEFORE":

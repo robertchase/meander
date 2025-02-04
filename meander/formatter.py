@@ -90,7 +90,7 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
             if isinstance(self.content, int):
                 self.content = str(self.content)
 
-            if isinstance(self.content, (list, dict)):
+            if isinstance(self.content, list | dict):
                 self.content_type = "application/json"
             else:
                 self.content_type = "text/plain"
@@ -132,10 +132,8 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
 
     def serial(self):
         """return formatted response"""
-        headers = "%s\r\n%s\r\n\r\n" % (
-            self.status,
-            "\r\n".join([f"{k}: {v}" for k, v in self.headers.items()]),
-        )
+        headers = "\r\n".join([f"{k}: {v}" for k, v in self.headers.items()])
+        headers = f"{self.status}\r\n{headers}\r\n\r\n"
         headers = headers.encode("ascii")
 
         return headers + self.content if self.content else headers
@@ -152,7 +150,7 @@ def _normalize(dct):
         return []
     result = []
     for key, val in dct.items():
-        if isinstance(val, (list, tuple)):
+        if isinstance(val, list | tuple):
             for lval in val:
                 result.append((key, lval))
         else:

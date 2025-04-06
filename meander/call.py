@@ -1,9 +1,11 @@
 """one-shot http client"""
 
+import asyncio
 import logging
 from urllib.parse import urlparse
 
 from meander.client import Client
+from meander import retry_policy
 
 
 log = logging.getLogger(__name__)
@@ -22,28 +24,45 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     max_read_size=5000,
     method="GET",
     verbose=False,
+    retry=None,
 ):
     """make client call and return response"""
 
     parsed_url = _URL(url)
-    client = Client(verbose=verbose)
-    await client.open(parsed_url.host, parsed_url.port, is_ssl=parsed_url.is_ssl)
-    payload = client.write(
-        method=method,
-        path=parsed_url.path,
-        query_string=parsed_url.query,
-        content=content,
-        headers=headers,
-        content_type=content_type,
-        charset=charset,
-        compress=compress,
-        bearer=bearer,
-        close=True,
-    )
-    result = await client.read(timeout, active_timeout, max_read_size)
-    result.request = payload
-    await client.close()
-    return result
+    if retry is True:
+        retry = retry_policy.RetryPolicy()
+
+    async def _call():
+        client = Client(verbose=verbose)
+        await client.open(parsed_url.host, parsed_url.port, is_ssl=parsed_url.is_ssl)
+        payload = client.write(
+            method=method,
+            path=parsed_url.path,
+            query_string=parsed_url.query,
+            content=content,
+            headers=headers,
+            content_type=content_type,
+            charset=charset,
+            compress=compress,
+            bearer=bearer,
+            close=True,
+        )
+        result = await client.read(timeout, active_timeout, max_read_size)
+        result.request = payload
+        await client.close()
+        return result
+
+    while True:
+        delay = None
+        response = await _call()
+        if retry:
+            if delay := retry_policy.retry(response.http_status_code):
+                asyncio.sleep(delay)
+        if delay is None:
+            break
+
+
+    return response
 
 
 def _method(name):

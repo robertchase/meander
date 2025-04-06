@@ -36,7 +36,7 @@ import meander as web
 def echo(a: int, b: bool, c: str = None):
     return {"a": a, "b": b, "c": c}
     
-web.add_server({"/echo": echo})
+web.add_server().add_route("/echo", echo)
 web.run()
 ```
 

@@ -11,11 +11,9 @@ def echo(content):
     return content
 
 
-web.add_server({
-    "/ping": "pong",
-    "/echo": {
-        "GET": echo,
-        "PUT": echo,
-    },
-})
+(web.add_server()
+    .add_route("/ping", "pong")
+    .add_route("/echo", echo)
+    .add_route("/echo", echo, method="PUT")
+)
 web.run()

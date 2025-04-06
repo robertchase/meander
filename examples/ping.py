@@ -2,5 +2,5 @@
 import meander as web
 
 
-web.add_server({"/ping": "pong"})
+web.add_server().add_route("/ping", "pong")
 web.run()

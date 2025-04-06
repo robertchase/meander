@@ -27,19 +27,8 @@ def header(header_name, content_name, default=None):
     return _header
 
 
-web.add_server({
-    "/ping": "pong",
-    "/value": {
-        "GET": {
-            "before": [header("x-value", "value", "default-value")],
-            "handler": value
-        },
-    },
-    "/value/required": {
-        "GET": {
-            "before": [header("x-value", "value")],
-            "handler": value
-        },
-    },
-})
+(web.add_server()
+    .add_route("/value", value, before=header("x-value", "value", "default-value"))
+    .add_route("/value/required", value, before=header("x-value", "value"))
+)
 web.run()

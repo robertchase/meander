@@ -12,5 +12,5 @@ def add(a, b):
     return a + b
 
 
-web.add_server({"/add": add})
+web.add_server().add_route("/add", add)
 web.run()

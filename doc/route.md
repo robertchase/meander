@@ -77,8 +77,12 @@ from a `cli` or unit test).
 
   There is timing for the whole connection, and for each request.
 The connection id (cid) and request id (rid) are logged.
-The `METHOD`, `resource`, and return `HTTP status code` are recorded for each request.  
+The `METHOD`, `resource`, and return `HTTP status code` are recorded for each request.
 
+
+## Routes dict
+
+If the `add_server` method is called with a `dict` value for the `routes` argument, the value is treated as follows:
 
 `routes` is a dict of the form:
 
@@ -111,18 +115,3 @@ where:
 handler; each callable is invoked in order with a `meander.Request` as the only argument
 	
 If a pattern has only a `GET` method handler, then the dict of methods and handlers can be replaced with just a `HANDLER`.
-
-### name
-`name` is assigned to the server. This is used in log messages and is helpful in differentiating multiple servers.
-
-### port
-
-`port` is the TCP listening port for the server. Multiple calls to `add_server` must use different values for `port`.
-
-### base_url
-
-If every http_resource starts with the same characters, then these characters can be specified with `base_url`. If `base_url` is specified, then the `pattern` in each `route` will be prepended with the `base_url` value before being matched.
-
-### ssl\_certfile and ssl_keyfile
-
-These parameters must either be specified together, or absent. If present, they will configure the server to start as HTTPS. 

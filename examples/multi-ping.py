@@ -15,13 +15,6 @@ async def pingping():
     return result.content
 
 
-web.add_server({
-    "/ping": pingping,
-}, name="main")
-
-
-web.add_server({
-    "/ping": "pong",
-}, port=SECONDARY, name="secondary")
-
+web.add_server(name="main").add_route("/ping", pingping)
+web.add_server(name="secondary", port=SECONDARY).add_route("/ping", "pong")
 web.run()

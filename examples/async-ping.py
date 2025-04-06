@@ -12,8 +12,8 @@ async def pingping():
     return result.content
 
 
-web.add_server({
-    "/ping": "pong",
-    "/pingping": pingping,
-})
+(web.add_server()
+    .add_route("/ping", "pong")
+    .add_route("/pingping", pingping)
+)
 web.run()

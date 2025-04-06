@@ -7,3 +7,4 @@ build/
 dist/
 meander.egg-info/
 notebooks/
+.DS_Store

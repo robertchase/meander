@@ -61,8 +61,14 @@ def lookup_by_path(path):
 class Router:  # pylint: disable=too-few-public-methods
     """create a router for http requests"""
 
-    def __init__(self, routes: list[Route]):
-        self.routes = routes
+    def __init__(self, routes: list[Route] = None):
+        if routes is None:
+            self.routes = []
+        else:
+            self.routes = routes
+
+    def add(self, route):
+        self.routes.append(route)
 
     def __call__(self, resource: str, method: str) -> Endpoint | None:
         """Try to match a resource+method to a defined route.

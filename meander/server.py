@@ -34,10 +34,17 @@ class Server:
         if self.ssl_keyfile and not self.ssl_certfile:
             raise AttributeError("ssl_certfile not specified")
 
-        if isinstance(self.routes, dict):
-            self.router = router.from_dict(self.routes, self.base_url)
-        elif isinstance(self.routes, str):
+        if self.routes is None:
+            self.router = router.Router()
+        else:
             self.router = router.from_config(self.routes, self.base_url)
+
+    def add_route(self, resource, handler, method="GET", before=None, silent=False):
+        if before and callable(before):
+            before = [before]
+        self.router.add(router.Route(
+            handler, resource, method, before, silent, self.base_url))
+        return self
 
     async def start(self):
         """setup and start server listening on port"""
@@ -62,12 +69,12 @@ class Server:
 
 
 def add_server(  # pylint: disable=too-many-arguments
-    routes: dict,
-    name: str | None = None,
+    routes: str = None,
+    name: str = None,
     port: int = 8080,
-    base_url: str | None = None,
-    ssl_certfile: str | None = None,
-    ssl_keyfile: str | None = None,
+    base_url: str = None,
+    ssl_certfile: str = None,
+    ssl_keyfile: str = None,
 ) -> Server:
     """define and add a new server for meander to run"""
     server = Server(name, routes, port, base_url, ssl_certfile, ssl_keyfile)

@@ -14,5 +14,5 @@ def ping():
 
 
 if __name__ == "__main__":  # allow module to be imported without running
-    web.add_server({"/ping": ping})
+    web.add_server().add_route("/ping", ping)
     web.run()

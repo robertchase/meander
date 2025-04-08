@@ -8,7 +8,7 @@ class RetryPolicy:
     For use with meander.call.
     """
 
-    def __init__(self, backoff=None, codes: list[int] = None):
+    def __init__(self, backoff=None, codes: list[int] | None = None):
         """
         backoff - backoff object which determines how long the caller should
                   wait before retry. if not specified, FixedBackoff is used.

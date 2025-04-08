@@ -69,12 +69,12 @@ class Server:
 
 
 def add_server(  # pylint: disable=too-many-arguments
-    routes: str = None,
-    name: str = None,
+    routes: str | None = None,
+    name: str | None = None,
     port: int = 8080,
-    base_url: str = None,
-    ssl_certfile: str = None,
-    ssl_keyfile: str = None,
+    base_url: str | None = None,
+    ssl_certfile: str | None = None,
+    ssl_keyfile: str | None = None,
 ) -> Server:
     """define and add a new server for meander to run"""
     server = Server(name, routes, port, base_url, ssl_certfile, ssl_keyfile)

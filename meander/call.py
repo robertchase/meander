@@ -61,7 +61,6 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
         if delay is None:
             break
 
-
     return response
 
 

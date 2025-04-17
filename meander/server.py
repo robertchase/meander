@@ -42,8 +42,9 @@ class Server:
     def add_route(self, resource, handler, method="GET", before=None, silent=False):
         if before and callable(before):
             before = [before]
-        self.router.add(router.Route(
-            handler, resource, method, before, silent, self.base_url))
+        self.router.add(
+            router.Route(handler, resource, method, before, silent, self.base_url)
+        )
         return self
 
     async def start(self):

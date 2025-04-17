@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meander"
-version = "0.3.0"
+version = "0.3.1"
 
 [flake8]
 max-line-length = 88
@@ -18,6 +18,8 @@ extend-select = [
     "B",  # bugbear: security
     "E",  # pycodestyle
     "F",  # pyflakes
+    # "I",  # isort
+    # "SIM",  # flake8-simplify
     "ISC",  # string concatenation
     "UP",  # better syntax by version
     "RUF",  # ruff developers

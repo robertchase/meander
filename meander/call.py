@@ -53,12 +53,19 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
         return result
 
     while True:
-        delay = None
         response = await _call()
-        if retry:
-            if delay := retry_policy.retry(response.http_status_code):
-                asyncio.sleep(delay)
-        if delay is None:
+        status_code = response.http_status_code
+        headers = response.http_headers
+
+        if status_code in (301, 302) and "location" in headers:
+            new_url = _URL(headers["location"])
+            parsed_url.host = new_url.host
+            parsed_url.is_ssl = new_url.is_ssl
+
+        elif retry and (delay := retry.retry(status_code)):
+            await asyncio.sleep(delay)
+
+        else:
             break
 
     return response

@@ -51,7 +51,7 @@ class Server:
         resource: str,
         handler: str | Callable,
         method: str = "GET",
-        before: Callable | list[Callable] = None,
+        before: Callable | list[Callable] | None = None,
         silent: bool = False,
     ):
         """Add a route to the server.

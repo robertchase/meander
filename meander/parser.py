@@ -155,7 +155,7 @@ async def parse_client(reader, document):
     if len(toks) == 1:
         raise HTTPException(400, "Bad Request", "malformed status line")
 
-    if toks[0] != "HTTP/1.1":
+    if toks[0] not in ("HTTP/1.1", "HTTP/1.0"):
         raise HTTPException(400, "Bad Request", f"unsupported HTTP protocol: {toks[0]}")
 
     try:

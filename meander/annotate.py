@@ -47,8 +47,10 @@ def get_params(func):
 
     sig = inspect.signature(func)
     for par in sig.parameters.values():
-        param_type = get_type()
+        if par.default == types_.Ignore:
+            continue
 
+        param_type = get_type()
         params.append(
             Param(
                 param_type,
@@ -123,8 +125,12 @@ def call(func, request: Request):
 
         for param in params:
             if param.is_connection_id:
+                if param.name in content:
+                    raise exception.ExtraAttributeError([param.name])
                 update_arguments(param, connection_id)
             elif param.is_request:
+                if param.name in content:
+                    raise exception.ExtraAttributeError([param.name])
                 update_arguments(param, request)
             elif param.is_extra_kwarg:
                 pass

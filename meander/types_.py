@@ -4,6 +4,7 @@ import re
 
 
 ConnectionId = type("CONNECTIONID", (), {})
+Ignore = type("IGNORE", (), {})
 
 
 def boolean(value):

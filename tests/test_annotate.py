@@ -98,6 +98,22 @@ def test_get_params_special():
     assert not param.is_extra_kwarg
 
 
+def test_special_values():
+    """ConnectionId and Request can't be specified in content, since they are
+    automatically assigned by annotate.call.
+    """
+    request = Request()
+    request.args = []
+
+    request.content = {"test1": 1}  # can't specify ConnectionId
+    with pytest.raises(exception.ExtraAttributeError):
+        annotate.call(func4, request)
+
+    request.content = {"test2": 1}  # can't specify Request
+    with pytest.raises(exception.ExtraAttributeError):
+        annotate.call(func4, request)
+
+
 request = Request()
 request.content = {
     "test1": "100",

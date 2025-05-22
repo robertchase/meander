@@ -23,8 +23,8 @@ class RetryPolicy:
 
         Usage:
 
-        Create a RetryPolicy object, and call the retry method after each
-        failure to determine if and how long to wait before retrying the HTTP
+        Create a RetryPolicy object, and call the policy after each HTTP
+        request to determine if and how long to wait before retrying the HTTP
         request. Once the retry method returns a None, retry attempts should
         cease.
         """
@@ -41,7 +41,7 @@ class RetryPolicy:
             ]
         self.codes = codes
 
-    def retry(self, http_status_code: int) -> None | int:
+    def __call__(self, http_status_code: int) -> None | int:
         """Return None if no retry should be done, else return int ms delay"""
         if http_status_code not in self.codes:
             return None

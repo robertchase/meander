@@ -75,20 +75,20 @@ def test_exponential_backoff(kwargs, results):
 
 def test_retry_basic():
     rp = retry_policy.RetryPolicy()
-    assert rp.retry(200) is None
-    assert rp.retry(502) == retry_policy.INITIAL_DELAY_DEFAULT
-    assert rp.retry(502) == retry_policy.INITIAL_DELAY_DEFAULT
-    assert rp.retry(502) == retry_policy.INITIAL_DELAY_DEFAULT
-    assert rp.retry(502) is None
+    assert rp(200) is None
+    assert rp(502) == retry_policy.INITIAL_DELAY_DEFAULT
+    assert rp(502) == retry_policy.INITIAL_DELAY_DEFAULT
+    assert rp(502) == retry_policy.INITIAL_DELAY_DEFAULT
+    assert rp(502) is None
 
 
 def test_retry_linear():
     random.seed(RANDOM_SEED)
     lp = retry_policy.LinearBackoff()
     rp = retry_policy.RetryPolicy(lp, [1, 2, 3])
-    assert rp.retry(200) is None
-    assert rp.retry(1) == 1070
-    assert rp.retry(100) is None
-    assert rp.retry(2) == 2040
-    assert rp.retry(2) == 3060
-    assert rp.retry(2) is None
+    assert rp(200) is None
+    assert rp(1) == 1070
+    assert rp(100) is None
+    assert rp(2) == 2040
+    assert rp(2) == 3060
+    assert rp(2) is None

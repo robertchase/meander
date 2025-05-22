@@ -62,7 +62,7 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
             parsed_url.host = new_url.host
             parsed_url.is_ssl = new_url.is_ssl
 
-        elif retry and (delay := retry.retry(status_code)):
+        elif retry and (delay := retry(status_code)):
             await asyncio.sleep(delay)
 
         else:

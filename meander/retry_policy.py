@@ -45,7 +45,7 @@ class RetryPolicy:
         """Return None if no retry should be done, else return int ms delay"""
         if http_status_code not in self.codes:
             return None
-        return self.backoff.next()
+        return self.backoff()
 
 
 def jitter(value, jitter_pct):
@@ -69,7 +69,7 @@ class FixedBackoff:
     def calculate(self):
         return int(jitter(self.initial_delay_ms, self.jitter_pct))
 
-    def next(self):
+    def __call__(self):
         if self.retry == self.max_retry:
             return None
         self.retry += 1

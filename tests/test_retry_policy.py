@@ -21,10 +21,10 @@ RANDOM_SEED = 12321
 )
 def test_fixed_backoff(kwargs, results):
     random.seed(RANDOM_SEED)
-    fb = retry_policy.FixedBackoff(**kwargs)
+    backoff = retry_policy.FixedBackoff(**kwargs)
     for result in results:
-        assert fb.next() == result
-    assert fb.next() is None
+        assert backoff() == result
+    assert backoff() is None
 
 
 @pytest.mark.parametrize(
@@ -44,10 +44,10 @@ def test_fixed_backoff(kwargs, results):
 )
 def test_linear_backoff(kwargs, results):
     random.seed(RANDOM_SEED)
-    fb = retry_policy.LinearBackoff(**kwargs)
+    backoff = retry_policy.LinearBackoff(**kwargs)
     for result in results:
-        assert fb.next() == result
-    assert fb.next() is None
+        assert backoff() == result
+    assert backoff() is None
 
 
 @pytest.mark.parametrize(
@@ -67,10 +67,10 @@ def test_linear_backoff(kwargs, results):
 )
 def test_exponential_backoff(kwargs, results):
     random.seed(RANDOM_SEED)
-    fb = retry_policy.ExponentialBackoff(**kwargs)
+    backoff = retry_policy.ExponentialBackoff(**kwargs)
     for result in results:
-        assert fb.next() == result
-    assert fb.next() is None
+        assert backoff() == result
+    assert backoff() is None
 
 
 def test_retry_basic():

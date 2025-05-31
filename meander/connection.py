@@ -1,7 +1,7 @@
 """wrap tcp socket with HTTP logic"""
 
 import asyncio
-from itertools import count
+import itertools
 import logging
 import time
 
@@ -15,8 +15,8 @@ from meander.response import Response
 log = logging.getLogger(__package__)
 
 
-connection_sequence = count(1)
-request_sequence = count(1)
+connection_sequence = itertools.count(1)
+request_sequence = itertools.count(1)
 
 
 class Connection:

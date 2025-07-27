@@ -1,13 +1,20 @@
 # Route
 
-A route defines how an HTTP `resource` is handled by a server. A list of routes is provided to a server when the `add_server` method is called. This list of routes is used to classify and handle incoming `HTTP` requests.
+A route defines how an HTTP `resource` is handled by a server.
+A list of routes is used to classify and handle incoming `HTTP` requests.
 
-Each `HTTP` document sent to the server will be matched against the items in `routes`. The handler associated with the first match will be executed; if no match is found, `meander` will respond with a `404`.
+A list of routes can be provided to a server when the `add_server` method is called. 
+Individual routes can be added to the end of the list of routes using the `add_route` method of a `Server`.
+
+Each `HTTP` document sent to the server will be matched against the items in the specified `routes`. The handler associated with the first match will be executed; if no match is found, `meander` will respond with a `404`.
 
 ## Routes file
 
 If the `add_server` method is called with a `str` value for the `routes` argument, the value is treated as a dot-delimited path name to a file containing `route` definitions. The file is expected to be in the python path.
 The file must have a file type; `.routes` is conventional.
+
+The `routes` argument can also be specified as an `io.IOBase`, or as `None`.
+`None` (the default if not specified) means that no `routes` are added to the server when it is created.
 
 A `routes` file is of the form (the numbers in square brackets are notes):
 
@@ -25,10 +32,11 @@ ROUTE /user/(\d+)
 ROUTE /foo
     METHOD PUT
         BEFORE api.before.auth [4]
-        HANDLER api.foo.update
+        # i am a comment
+        HANDLER api.foo.update  # i am a comment too
 ```
 
-Each line begins with a directive (eg. ROUTE, METHOD, etc). A directive can be preceeded by whitespace, which might help with readability. A directive is *not* case sensitive.
+Each line begins with a directive (eg. ROUTE, METHOD, etc). A directive can be preceeded by whitespace, which might help with readability. A directive is *not* case sensitive. Blank lines are ignored, and anything on a line following a `#`, is ignored.
 
 1. A `ROUTE` directive specifies a pattern that matches the `url` of an inbound `HTTP` request.
 
@@ -78,40 +86,3 @@ from a `cli` or unit test).
   There is timing for the whole connection, and for each request.
 The connection id (cid) and request id (rid) are logged.
 The `METHOD`, `resource`, and return `HTTP status code` are recorded for each request.
-
-
-## Routes dict
-
-If the `add_server` method is called with a `dict` value for the `routes` argument, the value is treated as follows:
-
-`routes` is a dict of the form:
-
-```
-{
-    "pattern": HANDLER,
-    "pattern": {
-        "method": HANDLER,
-        "method": {control-parameters},...
-    },...
-}
-```
-
-where:
-
-* `pattern` is a regex matching an http_resorce (path); the pattern must match the complete resource
-* `method` is a string matching an http_method (`GET`, `POST`, etc)
-* `HANDLER` is an http handler (callable), or a dot-delimited path to an http handler (dynamically loaded), or a simple string (returned on match)
-* `control-parameters` is a dict containing:
-
-		"handler": HANDLER
-	
-	and any of:
-	
-		"silent": True|False
-		"before": [callable, ...]
-
-* `silent` is a flag that controls log messages produced by meander for each connection (default=False)
-* `before` is a list of callables to execute prior to calling the
-handler; each callable is invoked in order with a `meander.Request` as the only argument
-	
-If a pattern has only a `GET` method handler, then the dict of methods and handlers can be replaced with just a `HANDLER`.

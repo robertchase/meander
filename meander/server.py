@@ -60,7 +60,7 @@ class Server:
         handler - a callable to execute on match
                   or a dot-delimited path to an callable to be loaded
                   or a simple string (no imbedded dot character) to be returned
-        method - the method match and HTTP request's method (eg, "POST")
+        method - the method that matches the HTTP request's method (eg, "POST")
         before - a callable, or list of callables, to run before calling the
                  handler
         silent - a flag to control connection logging

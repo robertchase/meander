@@ -1,6 +1,7 @@
 """call a function with parameter values from a web.Request"""
 
 from dataclasses import dataclass
+import functools
 import inspect
 
 from meander import exception
@@ -8,14 +9,9 @@ from meander.document import ServerDocument as Request
 from meander import types_
 
 
-CACHE = {}  # save the results of get_params
-
-
+@functools.cache
 def get_params(func):
     """return list of Param instances for each arg/kwarg of 'func'"""
-
-    if func in CACHE:
-        return CACHE[func]
 
     @dataclass
     class Param:
@@ -62,8 +58,6 @@ def get_params(func):
                 par.kind == par.VAR_KEYWORD,
             )
         )
-
-    CACHE[func] = params
 
     return params
 

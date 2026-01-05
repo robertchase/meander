@@ -5,6 +5,7 @@ import logging
 from urllib.parse import urlparse
 
 from meander.client import Client
+from meander import document
 from meander import retry_policy
 
 
@@ -14,19 +15,23 @@ log = logging.getLogger(__name__)
 async def call(  # pylint: disable=too-many-arguments, too-many-locals
     url,
     content="",
-    headers=None,
-    content_type=None,
-    charset="utf-8",
-    compress=False,
-    bearer=None,
-    timeout=60,
-    active_timeout=5,
-    max_read_size=5000,
-    method="GET",
-    verbose=False,
-    retry=None,
-):
-    """make client call and return response"""
+    headers: dict | None=None,
+    content_type: str | None=None,
+    charset: str="utf-8",
+    compress: bool=False,
+    bearer: str | None=None,
+    timeout: int=60,
+    active_timeout: int=5,
+    max_read_size: int=5000,
+    method: str="GET",
+    verbose: bool=False,
+    retry: bool | retry_policy.RetryPolicy | None=None,
+) -> document.ClientDocument:
+    """Make an HTTP call and return the response in a ClientDocument.
+
+    The payload sent to the server is saved in the returned ClientDocument as the
+    'request' attribute.
+    """
 
     parsed_url = _URL(url)
     if retry is True:

@@ -13,7 +13,7 @@ Endpoint = namedtuple("Endpoint", "handler, args, silent, before")
 class Route:  # pylint: disable=too-few-public-methods
     """Container for a single route."""
 
-    # pylint: disable-next=too-many-arguments
+    # pylint: disable-next=too-many-arguments, too-many-positional-arguments
     def __init__(
         self, handler, resource, method, before=None, silent=False, base_url=None
     ):
@@ -151,6 +151,7 @@ def load(config: str | io.IOBase, base_url: str = "") -> Router:
     if not isinstance(config, io.IOBase):
         config = open(dot_delimited_to_path(config), encoding="utf-8")
     router = Router()
+    methods = set()
 
     def add_route():
         """Add a new route."""

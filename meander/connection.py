@@ -76,6 +76,8 @@ class Connection:
             reason_code = exc.code
             result = self.on_http_exception(exc)
             self.writer.write(result.serial())
+        except ConnectionResetError:
+            log.info("connection cid=%s reset by peer", self.cid)
         except Exception:  # pylint: disable=broad-exception-caught
             log.exception("exception: cid=%s", self.cid)
             reason_code = 500

@@ -277,8 +277,10 @@ async def parse_chunked(reader, document):
             # pylint: disable-next=broad-exception-raised
             raise Exception(f"Invalid transfer-encoding chunk length: {line}") from exc
         if length == 0:
+            await reader.readline()  # consume trailing CRLF after final chunk
             break
         document.http_content += await reader.read(length)
+        await reader.readline()  # consume trailing CRLF after chunk data
 
 
 def parse_content(document):

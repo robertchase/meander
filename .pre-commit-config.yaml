@@ -1,0 +1,20 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: env PYTHONPATH=. .venv/bin/pytest tests
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -407,3 +407,96 @@ def test_content_form():
         assert document.content["b"] == "2"
 
     asyncio.run(test())
+
+
+def test_chunked_single():
+    """test chunked transfer encoding with a single chunk"""
+    data = (
+        b"POST / HTTP/1.1\r\n"
+        b"transfer-encoding: chunked\r\n"
+        b"content-type: text/plain\r\n"
+        b"\r\n"
+        b"5\r\n"
+        b"hello\r\n"
+        b"0\r\n"
+        b"\r\n"
+    )
+    reader = HTTPReader(ByteReader(data))
+
+    async def test():
+        document = await parse(reader)
+        assert document.http_content == b"hello"
+
+    asyncio.run(test())
+
+
+def test_chunked_multiple():
+    """test chunked transfer encoding with multiple chunks"""
+    data = (
+        b"POST / HTTP/1.1\r\n"
+        b"transfer-encoding: chunked\r\n"
+        b"content-type: text/plain\r\n"
+        b"\r\n"
+        b"5\r\n"
+        b"hello\r\n"
+        b"6\r\n"
+        b" world\r\n"
+        b"0\r\n"
+        b"\r\n"
+    )
+    reader = HTTPReader(ByteReader(data))
+
+    async def test():
+        document = await parse(reader)
+        assert document.http_content == b"hello world"
+
+    asyncio.run(test())
+
+
+def test_chunked_json():
+    """test chunked transfer encoding with json content"""
+    body = json.dumps({"key": "value"}).encode()
+    chunk = f"{len(body):x}\r\n".encode() + body + b"\r\n"
+    data = (
+        (
+            b"POST / HTTP/1.1\r\n"
+            b"transfer-encoding: chunked\r\n"
+            b"content-type: application/json\r\n"
+            b"\r\n"
+        )
+        + chunk
+        + b"0\r\n\r\n"
+    )
+    reader = HTTPReader(ByteReader(data))
+
+    async def test():
+        document = await parse(reader)
+        assert document.content["key"] == "value"
+
+    asyncio.run(test())
+
+
+def test_chunked_keepalive():
+    """test chunked parsing with a subsequent keep-alive request"""
+    data = (
+        b"POST / HTTP/1.1\r\n"
+        b"transfer-encoding: chunked\r\n"
+        b"content-type: text/plain\r\n"
+        b"\r\n"
+        b"3\r\n"
+        b"abc\r\n"
+        b"0\r\n"
+        b"\r\n"
+        b"GET /next HTTP/1.1\r\n"
+        b"\r\n"
+    )
+    reader = HTTPReader(ByteReader(data))
+
+    async def test():
+        doc1 = await reader.read_document()
+        assert doc1.http_content == b"abc"
+        doc2 = await reader.read_document()
+        assert doc2.http_method == "GET"
+        assert doc2.http_resource == "/next"
+
+    asyncio.run(test())

@@ -3,10 +3,12 @@
 import asyncio
 from dataclasses import dataclass
 import logging
+import ssl
+
+import certifi
 
 from meander.parser import HTTPReader
 from meander.formatter import HTTPFormat
-
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +23,10 @@ class Client:
         """open a connection to host/port"""
         # pylint: disable=attribute-defined-outside-init
         self.host = host
-        reader, self.writer = await asyncio.open_connection(host, port, ssl=is_ssl)
+        ssl_context = (
+            ssl.create_default_context(cafile=certifi.where()) if is_ssl else None
+        )
+        reader, self.writer = await asyncio.open_connection(host, port, ssl=ssl_context)
         self.reader = HTTPReader(reader, is_server=False)
 
     def write(  # pylint: disable=too-many-arguments

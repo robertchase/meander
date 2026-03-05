@@ -31,6 +31,8 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
     host: str = None
 
     def __post_init__(self) -> None:
+        if self.headers is None:
+            self.headers = {}
         if self.is_response:
             self.fmt_response()
         else:

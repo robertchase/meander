@@ -30,6 +30,7 @@ class Connection:
         router: Router,
         name: str | None = None,
     ) -> None:
+        """initialize connection with reader, writer, router, and server name"""
         self.cid = next(connection_sequence)
         self.reader = HTTPReader(reader)
         self.writer = writer

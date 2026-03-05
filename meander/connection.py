@@ -7,10 +7,11 @@ import time
 
 from meander import annotate
 from meander import exception
+from meander.document import ServerDocument
 from meander.parser import HTTPReader
 from meander.parser import parse
 from meander.response import Response
-
+from meander.router import Router
 
 log = logging.getLogger(__package__)
 
@@ -22,7 +23,13 @@ request_sequence = itertools.count(1)
 class Connection:
     """handle requests arriving on an HTTP connection"""
 
-    def __init__(self, reader, writer, router, name=None):
+    def __init__(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        router: Router,
+        name: str | None = None,
+    ) -> None:
         self.cid = next(connection_sequence)
         self.reader = HTTPReader(reader)
         self.writer = writer
@@ -35,7 +42,7 @@ class Connection:
         self.open_msg = f"open server={name} " if name else ""
         self.open_msg += f"socket={peerhost}:{peerport} cid={self.cid}"
 
-    async def handle(self):
+    async def handle(self) -> None:
         """handle new connection"""
 
         t_start = time.perf_counter()
@@ -52,7 +59,7 @@ class Connection:
             except ConnectionResetError:
                 pass
 
-    async def next_request(self) -> bool:
+    async def next_request(self) -> bool | None:
         """get and handle the next request arriving on the connection"""
         self.message = None
         reason_code = 200
@@ -93,7 +100,7 @@ class Connection:
                     )
                     log.info(self.message)
 
-    async def handle_request(self, request) -> bool:
+    async def handle_request(self, request: ServerDocument) -> bool:
         """handle a single request"""
         rid = next(request_sequence)
         request.id = rid
@@ -129,10 +136,10 @@ class Connection:
 
         raise exception.HTTPException(404, "Not Found")
 
-    def on_http_exception(self, exc):
+    def on_http_exception(self, exc: exception.HTTPException) -> Response:
         """handle http exception response"""
         return Response(code=exc.code, message=exc.reason, content=exc.explanation)
 
-    def on_exception(self):
+    def on_exception(self) -> Response:
         """handle general exception response"""
         return Response(code=500, message="Internal Server Error")

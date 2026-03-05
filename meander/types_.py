@@ -1,13 +1,13 @@
 """meander types"""
 
 import re
-
+from typing import Any
 
 ConnectionId = type("CONNECTIONID", (), {})
 Ignore = type("IGNORE", (), {})
 
 
-def boolean(value):
+def boolean(value: Any) -> bool:
     """boolean type that accepts 1, "1", True, 0, "0", False"""
     if isinstance(value, str) and value.lower() == "true":
         return True
@@ -20,7 +20,7 @@ def boolean(value):
     raise ValueError("not a boolean")
 
 
-def integer(value):
+def integer(value: Any) -> int:
     """integer type that converts ints or strings of digits to int"""
     if not re.match(r"\d+$", str(value)):
         raise ValueError("not an integer")
@@ -30,7 +30,7 @@ def integer(value):
 class String:  # pylint: disable=too-few-public-methods
     """string type with min and max length settings"""
 
-    def __init__(self, min_length=0, max_length=None):
+    def __init__(self, min_length: int = 0, max_length: int | None = None) -> None:
         self.min_length = int(min_length)
         if self.min_length < 0:
             raise AttributeError("min_length must be greater than or equal to zero")
@@ -42,7 +42,7 @@ class String:  # pylint: disable=too-few-public-methods
                 )
         self.max_length = max_length
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> str:
         value = str(value)
         if self.min_length:
             if len(value) < self.min_length:

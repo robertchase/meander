@@ -1,6 +1,7 @@
 """one-shot http client"""
 
 import asyncio
+from collections.abc import Callable
 import logging
 from urllib.parse import urlparse
 
@@ -8,24 +9,23 @@ from meander.client import Client
 from meander import document
 from meander import retry_policy
 
-
 log = logging.getLogger(__name__)
 
 
 async def call(  # pylint: disable=too-many-arguments, too-many-locals
-    url,
-    content="",
-    headers: dict | None=None,
-    content_type: str | None=None,
-    charset: str="utf-8",
-    compress: bool=False,
-    bearer: str | None=None,
-    timeout: int=60,
-    active_timeout: int=5,
-    max_read_size: int=5000,
-    method: str="GET",
-    verbose: bool=False,
-    retry: bool | retry_policy.RetryPolicy | None=None,
+    url: str,
+    content: str | dict = "",
+    headers: dict | None = None,
+    content_type: str | None = None,
+    charset: str = "utf-8",
+    compress: bool = False,
+    bearer: str | None = None,
+    timeout: int = 60,
+    active_timeout: int = 5,
+    max_read_size: int = 5000,
+    method: str = "GET",
+    verbose: bool = False,
+    retry: bool | retry_policy.RetryPolicy | None = None,
 ) -> document.ClientDocument:
     """Make an HTTP call and return the response in a ClientDocument.
 
@@ -37,7 +37,7 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     if retry is True:
         retry = retry_policy.RetryPolicy()
 
-    async def _call():
+    async def _call() -> document.ClientDocument:
         client = Client(verbose=verbose)
         await client.open(parsed_url.host, parsed_url.port, is_ssl=parsed_url.is_ssl)
         payload = client.write(
@@ -76,10 +76,10 @@ async def call(  # pylint: disable=too-many-arguments, too-many-locals
     return response
 
 
-def _method(name):
+def _method(name: str) -> Callable:
     """create request call bound to a method"""
 
-    async def inner(url, *args, **kwargs):
+    async def inner(url: str, *args, **kwargs) -> document.ClientDocument:
         return await call(url, *args, method=name, **kwargs)
 
     return inner
@@ -95,7 +95,7 @@ call.delete = _method("DELETE")
 class _URL:  # pylint: disable=too-few-public-methods
     """url parser"""
 
-    def __init__(self, url):
+    def __init__(self, url: str) -> None:
         parsed = urlparse(url)
         self.is_ssl = parsed.scheme == "https"
         if ":" in parsed.netloc:

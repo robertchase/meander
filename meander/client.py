@@ -7,6 +7,7 @@ import ssl
 
 import certifi
 
+from meander.document import ClientDocument
 from meander.parser import HTTPReader
 from meander.formatter import HTTPFormat
 
@@ -19,7 +20,7 @@ class Client:
 
     verbose: bool = False
 
-    async def open(self, host, port, is_ssl=False):
+    async def open(self, host: str, port: int, is_ssl: bool = False) -> None:
         """open a connection to host/port"""
         # pylint: disable=attribute-defined-outside-init
         self.host = host
@@ -31,17 +32,17 @@ class Client:
 
     def write(  # pylint: disable=too-many-arguments
         self,
-        method="GET",
-        path="/",
-        query_string="",
-        content="",
-        headers=None,
-        content_type=None,
-        charset="utf-8",
-        compress=False,
-        bearer=None,
-        close=False,
-    ):
+        method: str = "GET",
+        path: str = "/",
+        query_string: str = "",
+        content: str | dict = "",
+        headers: dict | None = None,
+        content_type: str | None = None,
+        charset: str = "utf-8",
+        compress: bool = False,
+        bearer: str | None = None,
+        close: bool = False,
+    ) -> HTTPFormat:
         """write an HTTP document to the writer"""
         if bearer:
             if not headers:
@@ -68,7 +69,12 @@ class Client:
 
         return payload
 
-    async def read(self, timeout=60, active_timeout=5, max_read_size=5000):
+    async def read(
+        self,
+        timeout: int = 60,
+        active_timeout: int = 5,
+        max_read_size: int = 5000,
+    ) -> ClientDocument:
         """read response from socket"""
         self.reader.timeout = timeout
         self.reader.active_timeout = active_timeout
@@ -83,7 +89,7 @@ class Client:
 
         return result
 
-    async def close(self):
+    async def close(self) -> None:
         """close the writer"""
         self.writer.close()
         await self.writer.wait_closed()

@@ -1,8 +1,10 @@
 """call a function with parameter values from a web.Request"""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 import functools
 import inspect
+from typing import Any
 
 from meander import exception
 from meander.document import ServerDocument as Request
@@ -10,7 +12,7 @@ from meander import types_
 
 
 @functools.cache
-def get_params(func):
+def get_params(func: Callable) -> list:
     """return list of Param instances for each arg/kwarg of 'func'"""
 
     @dataclass
@@ -26,7 +28,8 @@ def get_params(func):
         is_required: bool
         is_extra_kwarg: bool
 
-    def get_type():
+    def get_type() -> Callable:
+        """return the type converter for the current parameter"""
         # pylint: disable=too-many-return-statements
         if par.annotation != par.empty:
             if par.annotation in (Request, types_.ConnectionId):
@@ -62,7 +65,7 @@ def get_params(func):
     return params
 
 
-def call(func, request: Request):
+def call(func: Callable, request: Request) -> Any:
     """call 'func' with args/kwargs from request"""
     # pylint: disable=too-many-branches
 
@@ -89,7 +92,7 @@ def call(func, request: Request):
 
         if len(request.args) > len(params):
             valid = len(params)
-            raise exception.ExtraAttributeError(args[valid:])
+            raise exception.ExtraAttributeError(request.args[valid:])
 
         for value, param in zip(request.args, params, strict=False):
             if param.name in content:
@@ -111,7 +114,8 @@ def call(func, request: Request):
                 if key not in param_names:
                     raise exception.ExtraAttributeError([key])
 
-        def update_arguments(param, value):
+        def update_arguments(param, value: Any) -> None:
+            """append value to args or kwargs based on param"""
             if param.is_required:
                 args.append(value)
             else:

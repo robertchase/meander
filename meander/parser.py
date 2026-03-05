@@ -30,15 +30,15 @@ class HTTPReader:  # pylint: disable=too-many-instance-attributes
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        reader,
-        max_line_length=10_000,
-        max_header_count=100,
-        max_content_length=None,
-        timeout=60,
-        active_timeout=5,
-        max_read_size=5000,
-        is_server=True,
-    ):
+        reader: asyncio.StreamReader,
+        max_line_length: int = 10_000,
+        max_header_count: int = 100,
+        max_content_length: int | None = None,
+        timeout: int = 60,
+        active_timeout: int = 5,
+        max_read_size: int = 5000,
+        is_server: bool = True,
+    ) -> None:
         self.reader = reader
         self.max_line_length = max_line_length
         self.max_header_count = max_header_count
@@ -49,10 +49,10 @@ class HTTPReader:  # pylint: disable=too-many-instance-attributes
         self.is_server = is_server
         self.buffer = b""
 
-    async def read_block(self):
+    async def read_block(self) -> None:
         """read a block from the underlying stream"""
 
-        async def _read():
+        async def _read() -> bytes:
             return await self.reader.read(self.max_read_size)
 
         if len(self.buffer):
@@ -66,7 +66,7 @@ class HTTPReader:  # pylint: disable=too-many-instance-attributes
 
         self.buffer += data
 
-    async def read(self, length):
+    async def read(self, length: int) -> bytes:
         """read length bytes"""
         while True:
             if len(self.buffer) >= length:
@@ -74,7 +74,7 @@ class HTTPReader:  # pylint: disable=too-many-instance-attributes
                 return data
             await self.read_block()
 
-    async def readline(self):
+    async def readline(self) -> str:
         """read a line (ends in \n or \r\n) as ascii"""
         while True:
             test = self.buffer.split(b"\n", 1)
@@ -92,12 +92,12 @@ class HTTPReader:  # pylint: disable=too-many-instance-attributes
                 )
             await self.read_block()
 
-    async def read_document(self):
+    async def read_document(self) -> ClientDocument | ServerDocument | None:
         """read the next document from the reader"""
         return await parse(self)
 
 
-async def parse(reader):
+async def parse(reader: HTTPReader) -> ClientDocument | ServerDocument | None:
     """parse an HTTP document from a stream"""
 
     if not isinstance(reader, HTTPReader):
@@ -116,7 +116,7 @@ async def parse(reader):
     return document
 
 
-async def parse_server(reader, document):
+async def parse_server(reader: HTTPReader, document: ServerDocument) -> None:
     """parse a server document from reader"""
 
     # --- status: <method> <resource> HTTP/1.1
@@ -145,7 +145,7 @@ async def parse_server(reader, document):
         parse_content(document)
 
 
-async def parse_client(reader, document):
+async def parse_client(reader: HTTPReader, document: ClientDocument) -> None:
     """parse a client document from reader"""
 
     # --- status: HTTP/1.1 <code> [<message>]
@@ -175,7 +175,9 @@ async def parse_client(reader, document):
     parse_content(document)
 
 
-async def parse_headers_and_body(reader, document):  # pylint: disable=too-many-branches
+async def parse_headers_and_body(  # pylint: disable=too-many-branches
+    reader: HTTPReader, document: ClientDocument | ServerDocument
+) -> None:
     """parse headers and body from reader into document"""
 
     # --- headers
@@ -242,7 +244,9 @@ async def parse_headers_and_body(reader, document):  # pylint: disable=too-many-
         document.http_content = data.decode(document.http_charset or "utf-8")
 
 
-async def parse_http_content(reader, document):
+async def parse_http_content(
+    reader: HTTPReader, document: ClientDocument | ServerDocument
+) -> None:
     """parse the http body from reader"""
 
     if document.http_headers.get("transfer-encoding") == "chunked":
@@ -265,7 +269,9 @@ async def parse_http_content(reader, document):
         document.http_content = await reader.read(document.http_content_length)
 
 
-async def parse_chunked(reader, document):
+async def parse_chunked(
+    reader: HTTPReader, document: ClientDocument | ServerDocument
+) -> None:
     """parse chunked data from reader"""
     document.http_content = b""
     while True:
@@ -274,8 +280,9 @@ async def parse_chunked(reader, document):
         try:
             length = int(line, 16)
         except ValueError as exc:
-            # pylint: disable-next=broad-exception-raised
-            raise Exception(f"Invalid transfer-encoding chunk length: {line}") from exc
+            raise HTTPException(
+                400, "Bad Request", f"invalid chunk length: {line}"
+            ) from exc
         if length == 0:
             await reader.readline()  # consume trailing CRLF after final chunk
             break
@@ -283,7 +290,7 @@ async def parse_chunked(reader, document):
         await reader.readline()  # consume trailing CRLF after chunk data
 
 
-def parse_content(document):
+def parse_content(document: ClientDocument | ServerDocument) -> None:
     """extract content based on http_content_type"""
     if document.http_content_type == "application/json":
         if document.http_content:

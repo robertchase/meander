@@ -1,6 +1,6 @@
 """formatters for HTTP documents"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import gzip
 import json
 import time
@@ -17,7 +17,7 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
     code: int = 200  # response
     message: str = ""  # response
 
-    headers: dict = None
+    headers: dict = field(default_factory=dict)
     content_type: str = None
     charset: str = "utf-8"
     close: bool = False
@@ -30,21 +30,20 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
     query: dict | str = ""
     host: str = None
 
-    def __post_init__(self):
-        self.headers = {} if not self.headers else self.headers
+    def __post_init__(self) -> None:
         if self.is_response:
             self.fmt_response()
         else:
             self.fmt_request()
         self.fmt_common()
 
-    def fmt_response(self):
+    def fmt_response(self) -> None:
         """response specific formatting"""
 
         self.message = "OK" if self.code == 200 and self.message == "" else self.message
         self.status = f"HTTP/1.1 {self.code} {self.message}"
 
-    def fmt_request(self):
+    def fmt_request(self) -> None:
         """request specific formatting"""
         if self.host:
             self.headers["HOST"] = self.host
@@ -66,7 +65,7 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
 
         self.status = f"{self.method} {self.path} HTTP/1.1"
 
-    def fmt_common(self):
+    def fmt_common(self) -> None:
         """format items common to both response and request documents"""
 
         header_lower = {key.lower(): value for key, value in self.headers.items()}
@@ -76,7 +75,7 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
             self.content_type = None
         self.fmt_headers(header_lower)
 
-    def fmt_content(self, header_lower):
+    def fmt_content(self, header_lower: dict) -> None:
         """normalize content and content_type
 
         focus primarily on form and json content in order to help with
@@ -109,7 +108,7 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
         if self.compress:
             self.content = gzip.compress(self.content)
 
-    def fmt_headers(self, header_lower):
+    def fmt_headers(self, header_lower: dict) -> None:
         """add some standard headers"""
 
         if self.content_type:
@@ -130,7 +129,7 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
             if "connection" not in header_lower:
                 self.headers["Connection"] = "close"
 
-    def serial(self):
+    def serial(self) -> bytes:
         """return formatted response"""
         headers = "\r\n".join([f"{k}: {v}" for k, v in self.headers.items()])
         headers = f"{self.status}\r\n{headers}\r\n\r\n"
@@ -139,7 +138,7 @@ class HTTPFormat:  # pylint: disable=too-many-instance-attributes
         return headers + self.content if self.content else headers
 
 
-def _normalize(dct):
+def _normalize(dct: dict) -> list[tuple]:
     """Normalize a dict into a list of tuples
 
     Handle the case of a dictionary value being a list or tuple by adding

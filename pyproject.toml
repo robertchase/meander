@@ -4,13 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meander"
-version = "0.4.4"
+version = "0.5.0"
 dependencies = [
     "certifi",
 ]
-
-[flake8]
-max-line-length = 88
 
 [tool.setuptools.package-data]
 meander = ["py.typed"]

@@ -1,8 +1,11 @@
-"""formatters for HTTP responses"""
+"""formatters for HTTP responses
+
+Re-exports HTTPFormat as Response for a cleaner public API.
+"""
 
 from dataclasses import dataclass
 
-from meander.formatter import HTTPFormat as Response
+from meander.formatter import HTTPFormat as Response  # public alias
 
 
 @dataclass

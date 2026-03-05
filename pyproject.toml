@@ -12,6 +12,9 @@ dependencies = [
 [flake8]
 max-line-length = 88
 
+[tool.setuptools.package-data]
+meander = ["py.typed"]
+
 [tool.ruff]
 target-version = "py312"
 

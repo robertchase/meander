@@ -128,6 +128,13 @@ class Connection:
             if asyncio.iscoroutine(result):
                 result = await result
 
+            for after in route.after:
+                after_result = after(request, result)
+                if asyncio.iscoroutine(after_result):
+                    after_result = await after_result
+                if after_result is not None:
+                    result = after_result
+
             if result is None:
                 result = ""
             if not isinstance(result, Response):

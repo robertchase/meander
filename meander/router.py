@@ -6,8 +6,7 @@ import importlib
 import os
 import re
 
-
-Endpoint = namedtuple("Endpoint", "handler, args, silent, before")
+Endpoint = namedtuple("Endpoint", "handler, args, silent, before, after")
 
 
 class Route:  # pylint: disable=too-few-public-methods
@@ -15,7 +14,14 @@ class Route:  # pylint: disable=too-few-public-methods
 
     # pylint: disable-next=too-many-arguments, too-many-positional-arguments
     def __init__(
-        self, handler, resource, method, before=None, silent=False, base_url=None
+        self,
+        handler,
+        resource,
+        method,
+        before=None,
+        after=None,
+        silent=False,
+        base_url=None,
     ):
         self.handler = lookup_by_path(handler)
         if base_url:
@@ -29,11 +35,22 @@ class Route:  # pylint: disable=too-few-public-methods
             for path in before:
                 self.before.append(lookup_by_path(path))
 
+        self.after = []
+        if after is not None:
+            for path in after:
+                self.after.append(lookup_by_path(path))
+
     def match(self, resource, method):
         """Return Endpoint if specified resource and method match."""
         if match := self.resource.match(resource):
             if self.method == method:
-                return Endpoint(self.handler, match.groups(), self.silent, self.before)
+                return Endpoint(
+                    self.handler,
+                    match.groups(),
+                    self.silent,
+                    self.before,
+                    self.after,
+                )
         return None
 
 
@@ -217,6 +234,9 @@ def load(config: str | io.IOBase, base_url: str = "") -> Router:
 
         elif directive == "BEFORE":
             route.setdefault("before", []).append(one_parameter())
+
+        elif directive == "AFTER":
+            route.setdefault("after", []).append(one_parameter())
 
         elif directive == "SILENT":
             no_parameters()

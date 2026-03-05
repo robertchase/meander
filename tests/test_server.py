@@ -144,6 +144,42 @@ def test_add_route_with_before_list():
     assert len(endpoint.before) == 2
 
 
+def test_add_route_with_after_callable():
+    """test add_route wraps a single after callable in a list"""
+
+    def my_after(request, result):
+        pass
+
+    def handler():
+        return "ok"
+
+    server = Server(port=8080)
+    server.add_route("/test", handler, after=my_after)
+
+    endpoint = server.router("/test", "GET")
+    assert len(endpoint.after) == 1
+    assert endpoint.after[0] is my_after
+
+
+def test_add_route_with_after_list():
+    """test add_route accepts a list of after callables"""
+
+    def after_1(request, result):
+        pass
+
+    def after_2(request, result):
+        pass
+
+    def handler():
+        return "ok"
+
+    server = Server(port=8080)
+    server.add_route("/test", handler, after=[after_1, after_2])
+
+    endpoint = server.router("/test", "GET")
+    assert len(endpoint.after) == 2
+
+
 def test_add_route_with_base_url():
     """test add_route applies server base_url"""
     server = Server(port=8080, base_url="/v1")

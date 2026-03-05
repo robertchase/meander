@@ -5,6 +5,7 @@ import io
 import pytest
 
 from meander import router
+from tests import after as test_after
 from tests import before as test_before
 
 
@@ -94,30 +95,22 @@ def test_endpoint(data, resource, method, args, silent, before):
     ),
 )
 def test_no_match(resource, method):
-    rtr = router.load(
-        io.StringIO(
-            """
+    rtr = router.load(io.StringIO("""
         ROUTE /ping
         HANDLER pong
-    """
-        )
-    )
+    """))
     route = rtr.routes[0]
     assert route.match(resource, method) is None
 
 
 def test_multiple_routes():
-    rtr = router.load(
-        io.StringIO(
-            """
+    rtr = router.load(io.StringIO("""
         ROUTE /ping
         HANDLER pong
         ROUTE /pong
         METHOD PUT
         HANDLER ping
-    """
-        )
-    )
+    """))
     assert len(rtr.routes) == 2
     endpoint = rtr("/ping", "GET")
     assert endpoint
@@ -128,16 +121,12 @@ def test_multiple_routes():
 
 
 def test_multiple_methods():
-    rtr = router.load(
-        io.StringIO(
-            """
+    rtr = router.load(io.StringIO("""
         ROUTE /ping
         HANDLER pong
         METHOD PUT
         HANDLER put-pong
-    """
-        )
-    )
+    """))
     assert len(rtr.routes) == 2
     endpoint = rtr("/ping", "GET")
     assert endpoint
@@ -149,69 +138,59 @@ def test_multiple_methods():
 
 def test_route_not_found():
     with pytest.raises(router.RouteNotDefinedError):
-        router.load(
-            io.StringIO(
-                """
+        router.load(io.StringIO("""
             HANLDER pong
-        """
-            )
-        )
+        """))
 
 
 def test_handler_not_defined():
     with pytest.raises(router.HandlerNotDefinedError):
-        router.load(
-            io.StringIO(
-                """
+        router.load(io.StringIO("""
             ROUTE /ping
-        """
-            )
-        )
+        """))
 
 
 def test_no_parameters_expected():
     with pytest.raises(router.NoParametersExpectedError):
-        router.load(
-            io.StringIO(
-                """
+        router.load(io.StringIO("""
             ROUTE /ping
             SILENT foo
-        """
-            )
-        )
+        """))
 
 
 def test_one_parameter_expected():
     with pytest.raises(router.OneParameterExpectedError):
-        router.load(
-            io.StringIO(
-                """
+        router.load(io.StringIO("""
             ROUTE /ping pong
-        """
-            )
-        )
+        """))
 
 
 def test_duplicate_directive():
     with pytest.raises(router.DuplicateDirectiveError):
-        router.load(
-            io.StringIO(
-                """
+        router.load(io.StringIO("""
             ROUTE /ping
             SILENT
             SILENT
-        """
-            )
-        )
+        """))
+
+
+def test_after_directive():
+    """test AFTER directive loads after hook from dotted path"""
+    rtr = router.load(io.StringIO("""
+            ROUTE /ping
+            METHOD POST
+            AFTER tests.after.mock_after
+            HANDLER pong
+        """))
+    assert len(rtr.routes) == 1
+    endpoint = rtr.routes[0].match("/ping", "POST")
+    assert endpoint
+    assert endpoint.after == [test_after.mock_after]
 
 
 def test_unexpected_directive():
     with pytest.raises(router.UnexpectedDirectiveError):
-        router.load(
-            io.StringIO(
-                """
+        router.load(io.StringIO("""
             ROUTE /ping
             FOO
-        """
-            )
-        )
+        """))

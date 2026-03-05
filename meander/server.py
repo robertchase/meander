@@ -11,7 +11,6 @@ from meander.connection import Connection
 from meander import router
 from meander import runner
 
-
 log = logging.getLogger(__package__)
 
 
@@ -52,6 +51,7 @@ class Server:
         handler: str | Callable,
         method: str = "GET",
         before: Callable | list[Callable] | None = None,
+        after: Callable | list[Callable] | None = None,
         silent: bool = False,
     ):
         """Add a route to the server.
@@ -63,6 +63,8 @@ class Server:
         method - the method that matches the HTTP request's method (eg, "POST")
         before - a callable, or list of callables, to run before calling the
                  handler
+        after - a callable, or list of callables, to run after calling the
+                handler
         silent - a flag to control connection logging
 
         This route will be evaluated for a match against an incoming HTTP
@@ -70,8 +72,18 @@ class Server:
         """
         if before and callable(before):
             before = [before]
+        if after and callable(after):
+            after = [after]
         self.router.add(
-            router.Route(handler, resource, method, before, silent, self.base_url)
+            router.Route(
+                handler,
+                resource,
+                method,
+                before,
+                after,
+                silent,
+                self.base_url,
+            )
         )
         return self
 

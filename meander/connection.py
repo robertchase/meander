@@ -4,6 +4,7 @@ import asyncio
 import itertools
 import logging
 import time
+from collections.abc import Callable
 
 from meander import annotate
 from meander import exception
@@ -29,12 +30,14 @@ class Connection:
         writer: asyncio.StreamWriter,
         router: Router,
         name: str | None = None,
+        exception_handler: Callable | None = None,
     ) -> None:
         """initialize connection with reader, writer, router, and server name"""
         self.cid = next(connection_sequence)
         self.reader = HTTPReader(reader)
         self.writer = writer
         self.router = router
+        self.exception_handler = exception_handler
 
         self.silent = False
         self.message = None
@@ -86,10 +89,12 @@ class Connection:
             self.writer.write(result.serial())
         except ConnectionResetError:
             log.info("connection cid=%s reset by peer", self.cid)
-        except Exception:  # pylint: disable=broad-exception-caught
-            log.exception("exception: cid=%s", self.cid)
-            reason_code = 500
-            result = self.on_exception()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            result = self._call_user_handler(exc)
+            if result is None:
+                log.exception("exception: cid=%s", self.cid)
+                result = self.on_exception()
+            reason_code = result.code or 500
             self.writer.write(result.serial())
         finally:
             if not self.silent:
@@ -151,3 +156,32 @@ class Connection:
     def on_exception(self) -> Response:
         """handle general exception response"""
         return Response(code=500, message="Internal Server Error")
+
+    def _call_user_handler(self, exc: Exception) -> Response | None:
+        """Invoke the server's user-supplied exception_handler, if any.
+
+        Returns the Response it produces, or None if no handler is set, the
+        handler declined (returned None), or the handler itself raised.
+        Suppresses the default error log when the handler returns a Response,
+        because the exception was expected and translated to a clean reply.
+        """
+        if self.exception_handler is None:
+            return None
+        try:
+            response = self.exception_handler(exc)
+        except Exception:  # pylint: disable=broad-exception-caught
+            log.exception(
+                "error in exception_handler cid=%s while handling %r",
+                self.cid,
+                exc,
+            )
+            return None
+        if response is not None and not isinstance(response, Response):
+            log.error(
+                "exception_handler cid=%s returned non-Response %r for %r",
+                self.cid,
+                type(response).__name__,
+                exc,
+            )
+            return None
+        return response

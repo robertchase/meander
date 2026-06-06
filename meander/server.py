@@ -33,6 +33,7 @@ class Server:
     base_url: str = None
     ssl_certfile: str = None
     ssl_keyfile: str = None
+    exception_handler: Callable | None = None
 
     def __post_init__(self):
         if self.ssl_certfile and not self.ssl_keyfile:
@@ -105,7 +106,13 @@ class Server:
 
     async def __call__(self, reader, writer):
         """Called for each new connection to the port."""
-        connection = Connection(reader, writer, self.router, self.name)
+        connection = Connection(
+            reader,
+            writer,
+            self.router,
+            self.name,
+            exception_handler=self.exception_handler,
+        )
         await connection.handle()
 
 
@@ -116,8 +123,25 @@ def add_server(  # pylint: disable=too-many-arguments
     base_url: str | None = None,
     ssl_certfile: str | None = None,
     ssl_keyfile: str | None = None,
+    exception_handler: Callable | None = None,
 ) -> Server:
-    """Define and add a new server for meander to run."""
-    server = Server(port, name, routes, base_url, ssl_certfile, ssl_keyfile)
+    """Define and add a new server for meander to run.
+
+    exception_handler - an optional callable invoked when a handler raises
+        an exception not already caught by meander's specific handlers
+        (HTTPException, the parameter-validation errors, ConnectionResetError,
+        TimeoutError). The signature is ``(exc) -> Response | None``. Return
+        a Response to use it as the reply (and suppress the default error
+        log); return None to fall through to meander's default 500 behavior.
+    """
+    server = Server(
+        port,
+        name,
+        routes,
+        base_url,
+        ssl_certfile,
+        ssl_keyfile,
+        exception_handler,
+    )
     runner.add_task(server.start)
     return server
